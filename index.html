@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="5">
+<meta name="build" content="7">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -190,28 +190,158 @@ html, body {
   border-radius: 8px;
 }
 
-/* 4. Rest of the week + strength */
-.rest { margin: 0; color: var(--dim); font-size: 15px; }
-
-.strength {
+/* 4. Rest of the week + strength + anything else */
+.rest {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
   min-height: var(--tap);
+  margin: 0;
+  padding: 0;
   background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.rest .chev { margin-left: auto; color: #4d525a; }
+
+.split { display: flex; gap: 10px; }
+.split .half {
+  flex: 1;
+  min-height: var(--tap);
   border: 1px solid var(--line);
   border-radius: 12px;
+  background: none;
   color: var(--text);
   font: inherit;
   font-size: 15px;
-  padding: 8px 14px;
-  text-align: left;
+}
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 12px;
+  color: var(--dim);
+}
+.strength .lbl { margin-right: auto; }
+.mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  min-height: var(--tap);
   cursor: pointer;
 }
-.strength .plus { color: var(--accent); font-size: 20px; line-height: 1; }
-.strength .count { margin-left: auto; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
-.strength .sub { display: block; color: var(--dim); font-size: 13px; }
+.mini input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mini .box {
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid #3a3f47;
+  border-radius: 6px;
+}
+.mini input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.mini input:checked + .box::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 11px;
+  margin: 1px auto 0;
+  border: solid #12100e;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+.mini input:focus-visible + .box { outline: 2px solid var(--focus); outline-offset: 2px; }
+.other { cursor: pointer; padding: 0 8px; }
+
+.other-input { display: flex; gap: 8px; }
+.other-input input {
+  min-height: var(--tap);
+  min-width: 0;
+  background: #0f1114;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  padding: 0 10px;
+}
+#other-what { flex: 1; }
+#other-miles { width: 64px; font-variant-numeric: tabular-nums; }
+#other-save {
+  min-height: var(--tap);
+  padding: 0 16px;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Week checklist */
+.week-list { display: flex; flex-direction: column; }
+.wrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.wrow:last-child { border-bottom: 0; }
+.wrow input { position: absolute; opacity: 0; width: 0; height: 0; }
+.wrow .box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid #3a3f47;
+  border-radius: 7px;
+}
+.wrow input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.wrow input:checked + .box::after {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 12px;
+  margin: 2px auto 0;
+  border: solid #12100e;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+.wrow input:focus-visible + .box { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wtext { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wname { font-size: 16px; }
+.wnote { font-size: 13px; color: var(--dim); }
+.wrow input:checked ~ .wtext .wname { color: var(--dim); text-decoration: line-through; }
+.hint { margin: 0 0 10px; color: var(--dim); font-size: 15px; }
+.race-line {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--dim);
+  font-size: 14px;
+}
+.race-line button {
+  margin-left: auto;
+  min-height: var(--tap);
+  padding: 0 14px;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
 
 /* 5. Tonight + lists */
 .tonight, .list {
@@ -386,6 +516,7 @@ html, body {
 .detail h3 { margin: 0 0 2px; font-size: 20px; font-weight: 600; }
 .detail .big { margin: 0; font-size: 15px; color: var(--text); }
 .detail .sub { margin: 6px 0 0; color: var(--dim); font-size: 15px; }
+.detail .total { color: var(--text); font-variant-numeric: tabular-nums; }
 .detail .closed-note { margin: 8px 0 0; color: var(--dim); font-size: 14px; }
 .step {
   display: flex;
@@ -511,13 +642,29 @@ html, body {
   </section>
 
   <!-- 4. Rest of the week -->
-  <p class="rest" id="rest-line"></p>
+  <button type="button" class="rest" id="rest-line" aria-label="What is left this week"></button>
 
-  <button type="button" class="strength" id="strength" hidden>
-    <span class="plus" aria-hidden="true">+</span>
-    <span>Strength <span class="sub">Injury insurance, not training.</span></span>
-    <span class="count" id="strength-count">0 / 2</span>
-  </button>
+  <!-- Strength + anything else -->
+  <div class="split" id="split-row">
+    <div class="half strength">
+      <span class="lbl">Strength</span>
+      <label class="mini">
+        <input type="checkbox" id="str-0" aria-label="Strength session 1 of 2, optional">
+        <span class="box" aria-hidden="true"></span>
+      </label>
+      <label class="mini">
+        <input type="checkbox" id="str-1" aria-label="Strength session 2 of 2, optional">
+        <span class="box" aria-hidden="true"></span>
+      </label>
+    </div>
+    <button type="button" class="half other" id="open-other">+ Something else</button>
+  </div>
+
+  <div class="other-input" id="other-input" hidden>
+    <input type="text" id="other-what" maxlength="40" enterkeyhint="done" placeholder="Walked" aria-label="What you did">
+    <input type="text" id="other-miles" inputmode="decimal" enterkeyhint="done" placeholder="mi" aria-label="Miles">
+    <button type="button" id="other-save">Save</button>
+  </div>
 
   <!-- Today's three (morning) -->
   <section class="list" id="today-list" aria-labelledby="today-list-h" hidden>
@@ -572,8 +719,9 @@ html, body {
   <!-- Secondary views + export -->
   <footer class="footer">
     <div class="links">
+      <button type="button" id="open-week">This week</button>
       <button type="button" id="open-ladder">The ladder</button>
-      <button type="button" id="open-summary">Evening summary</button>
+      <button type="button" id="open-summary">Summary</button>
     </div>
     <p class="footnote" id="offline-note">Checking offline copy…</p>
     <button type="button" class="export" id="export">Export data</button>
@@ -581,6 +729,18 @@ html, body {
   </footer>
 
 </main>
+
+<!-- The week checklist -->
+<div class="sheet" id="week-sheet" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <button type="button" class="back" id="week-back" aria-label="Back to today">&lsaquo;</button>
+      <h2 id="week-title">This week</h2>
+    </div>
+    <p class="hint">Tick them off in any order. The long run stays on Saturday.</p>
+    <div class="week-list" id="week-list"></div>
+  </div>
+</div>
 
 <!-- The ladder -->
 <div class="sheet" id="ladder-sheet" hidden>
@@ -595,8 +755,13 @@ html, body {
       <h3 id="d-week">Week 1</h3>
       <p class="big" id="d-long">Long run 2 mi</p>
       <p class="sub" id="d-rest"></p>
+      <p class="sub total" id="d-total"></p>
       <p class="sub" id="d-note"></p>
       <p class="closed-note" id="d-closed" hidden></p>
+      <div class="race-line" id="race-line" hidden>
+        <span id="race-now"></span>
+        <button type="button" id="race-switch"></button>
+      </div>
       <div class="step">
         <button type="button" id="d-prev">&lsaquo; Earlier</button>
         <button type="button" id="d-next">Later &rsaquo;</button>
@@ -664,20 +829,11 @@ const EVENING_HOUR = 18;
 
 /* ---------- state ---------- */
 
-const DEFAULTS = {
-  startDate: null,
-  weekShift: 0,
-  raceChoice: null,
-  completed: {},
-  logs: {},
-  habits: {},
-  tasks: {},
-  weekHistory: [],
-  lastClosed: 0
-};
-
 let state = load();
 
+/* Every field is rebuilt fresh rather than copied from a shared template, so a
+   key an older build never saved (extras, say) can't end up pointing at the
+   same object as everything else. */
 function load() {
   let saved = {};
   try {
@@ -685,9 +841,19 @@ function load() {
   } catch (e) {
     saved = {};
   }
-  const s = Object.assign({}, DEFAULTS, saved);
-  if (!s.startDate) s.startDate = firstStart();
-  return s;
+
+  return {
+    startDate: saved.startDate || firstStart(),
+    weekShift: saved.weekShift || 0,
+    raceChoice: saved.raceChoice || null,
+    completed: saved.completed || {},
+    logs: saved.logs || {},
+    habits: saved.habits || {},
+    tasks: saved.tasks || {},
+    extras: saved.extras || {},
+    weekHistory: saved.weekHistory || [],
+    lastClosed: saved.lastClosed || 0
+  };
 }
 
 function save() {
@@ -957,7 +1123,8 @@ function render() {
   el("tonight").hidden = !evening;
 
   renderRest(week, dow);
-  renderStrength(week, evening);
+  renderStrength(week);
+  renderExtra();
   renderTasks(evening);
   renderHabits();
   renderRing(week);
@@ -1099,21 +1266,36 @@ function renderRest(week, dow) {
   const owed = sessions(week).filter(function (s) {
     return !isDone(s.id) && s.id !== todayId;
   });
+
+  let text;
   if (owed.length === 0) {
-    el("rest-line").textContent = "Nothing else owed this week.";
-    return;
+    text = "Nothing else owed this week.";
+  } else {
+    text = "Also this week: " + owed.map(function (s) {
+      return s.name.toLowerCase() + " " + s.dist + " mi" + (s.required ? "" : " (optional)");
+    }).join(" · ") + ".";
   }
-  const parts = owed.map(function (s) {
-    return s.name.toLowerCase() + " " + s.dist + " mi" + (s.required ? "" : " (optional)");
-  });
-  el("rest-line").textContent = "Also this week: " + parts.join(" · ") + ".";
+
+  const line = el("rest-line");
+  line.textContent = text;
+  const chev = document.createElement("span");
+  chev.className = "chev";
+  chev.setAttribute("aria-hidden", "true");
+  chev.textContent = "›";
+  line.appendChild(chev);
 }
 
-function renderStrength(week, evening) {
-  const done = strengthDone(week);
-  el("strength-count").textContent = done + " / 2";
-  el("strength").hidden = done >= 2 || evening;
-  el("strength").dataset.week = week;
+function renderStrength(week) {
+  const ids = strengthIds(week);
+  el("str-0").checked = isDone(ids[0]);
+  el("str-1").checked = isDone(ids[1]);
+}
+
+function renderExtra() {
+  const extra = state.extras[ymd(today())];
+  el("open-other").textContent = extra
+    ? extra.what + (extra.miles ? " " + extra.miles + " mi" : "")
+    : "+ Something else";
 }
 
 function renderHabits() {
@@ -1166,11 +1348,54 @@ el("undo").addEventListener("click", function () {
   render();
 });
 
-el("strength").addEventListener("click", function () {
-  const week = Number(this.dataset.week);
-  const next = strengthIds(week).find(function (id) { return !isDone(id); });
-  if (!next) return;
-  state.completed[next] = ymd(today());
+/* Strength is two checkboxes now: tap to tick, tap again to take it back. */
+[0, 1].forEach(function (i) {
+  el("str-" + i).addEventListener("change", function () {
+    toggleSession(strengthIds(currentWeek())[i], null);
+  });
+});
+
+/* Ticking anything writes today's date and the planned distance; unticking
+   removes it. Works for any session in the week, in any order. */
+function toggleSession(id, dist) {
+  if (isDone(id)) {
+    delete state.completed[id];
+    delete state.logs[id];
+  } else {
+    state.completed[id] = ymd(today());
+    if (dist && !state.logs[id]) {
+      state.logs[id] = { miles: dist, time: "", effort: null };
+    }
+  }
+  save();
+  if (!el("week-sheet").hidden) drawWeekList();
+  render();
+}
+
+/* Anything that isn't on the plan: a walk, a swim, a hike. Kept short on purpose
+   and left out of the week ring, which counts the plan and only the plan. */
+el("open-other").addEventListener("click", function () {
+  const extra = state.extras[ymd(today())] || {};
+  el("other-what").value = extra.what || "";
+  el("other-miles").value = extra.miles || "";
+  el("split-row").hidden = true;
+  el("other-input").hidden = false;
+  el("other-what").focus();
+});
+
+el("other-save").addEventListener("click", function () {
+  const what = el("other-what").value.trim();
+  const miles = parseFloat(el("other-miles").value);
+  const key = ymd(today());
+
+  if (what) {
+    state.extras[key] = { what: what, miles: isFinite(miles) ? miles : null };
+  } else {
+    delete state.extras[key];
+  }
+
+  el("other-input").hidden = true;
+  el("split-row").hidden = false;
   save();
   render();
 });
@@ -1231,10 +1456,75 @@ function closeSheet(id) {
 
 document.addEventListener("keydown", function (event) {
   if (event.key !== "Escape") return;
-  ["ladder-sheet", "summary-sheet"].forEach(function (id) {
+  ["week-sheet", "ladder-sheet", "summary-sheet"].forEach(function (id) {
     if (!el(id).hidden) closeSheet(id);
   });
 });
+
+/* ---------- the week checklist ---------- */
+
+function listRow(id, name, note, dist) {
+  const row = document.createElement("label");
+  row.className = "wrow";
+
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.checked = isDone(id);
+  input.addEventListener("change", function () { toggleSession(id, dist); });
+
+  const box = document.createElement("span");
+  box.className = "box";
+  box.setAttribute("aria-hidden", "true");
+
+  const text = document.createElement("span");
+  text.className = "wtext";
+
+  const title = document.createElement("span");
+  title.className = "wname";
+  title.textContent = name;
+  text.appendChild(title);
+
+  if (note) {
+    const sub = document.createElement("span");
+    sub.className = "wnote";
+    sub.textContent = note;
+    text.appendChild(sub);
+  }
+
+  row.appendChild(input);
+  row.appendChild(box);
+  row.appendChild(text);
+  return row;
+}
+
+function drawWeekList() {
+  const week = currentWeek();
+  const box = el("week-list");
+
+  el("week-title").textContent = "Week " + week + " of " + TOTAL_WEEKS;
+  box.textContent = "";
+
+  sessions(week).forEach(function (s) {
+    const note = s.dist + " mi" + (s.day === 6 ? " · Saturday" : "") + (s.required ? "" : " · optional");
+    box.appendChild(listRow(s.id, s.name, note, s.dist));
+  });
+
+  strengthIds(week).forEach(function (id, i) {
+    box.appendChild(listRow(id, "Strength " + (i + 1), "20 min · optional", null));
+  });
+}
+
+function openWeekSheet() {
+  drawWeekList();
+  openSheet("week-sheet", el("open-week"));
+}
+
+el("open-week").addEventListener("click", openWeekSheet);
+el("rest-line").addEventListener("click", function () {
+  drawWeekList();
+  openSheet("week-sheet", el("rest-line"));
+});
+el("week-back").addEventListener("click", function () { closeSheet("week-sheet"); });
 
 /* ---------- the ladder (§4.2) ---------- */
 
@@ -1304,6 +1594,12 @@ function drawDetail() {
   const rest = ["easy " + p.easy, "moderate " + p.mod];
   if (p.fri > 0) rest.push("Friday shakeout " + p.fri + " (optional)");
   el("d-rest").textContent = "Also: " + rest.join(", ") + ".";
+
+  /* Everything the plan asks for that week, the optional shakeout included —
+     the same arithmetic as the Total column in the plan table. */
+  const total = Math.round((long + p.easy + p.mod + p.fri) * 10) / 10;
+  el("d-total").textContent = total + " miles for the week.";
+
   el("d-note").textContent = p.note;
 
   const closed = state.weekHistory.find(function (h) { return h.week === selectedWeek; });
@@ -1312,9 +1608,24 @@ function drawDetail() {
     el("d-closed").textContent = "Closed — " + closed.done + " of " + closed.planned + " runs.";
   }
 
+  /* The gate is one tap that rewrites eight weeks of long runs, so it stays
+     changeable here rather than being final. */
+  const decided = selectedWeek >= 11 && state.raceChoice;
+  el("race-line").hidden = !decided;
+  if (decided) {
+    const half = state.raceChoice === "half";
+    el("race-now").textContent = half ? "Racing the half." : "Racing the full.";
+    el("race-switch").textContent = half ? "Switch to the full" : "Switch to the half";
+  }
+
   el("d-prev").disabled = selectedWeek <= 1;
   el("d-next").disabled = selectedWeek >= TOTAL_WEEKS;
 }
+
+el("race-switch").addEventListener("click", function () {
+  setRace(state.raceChoice === "half" ? "full" : "half");
+  drawLadder();
+});
 
 function stepWeek(n) {
   selectedWeek = clamp(selectedWeek + n, 1, TOTAL_WEEKS);
@@ -1355,6 +1666,11 @@ function summaryLines() {
     lines.push("No run logged.");
   } else {
     lines.push("Rest day.");
+  }
+
+  const extra = state.extras[stamp];
+  if (extra) {
+    lines.push(extra.what + (extra.miles ? ", " + extra.miles + " miles" : "") + ".");
   }
 
   const strength = strengthIds(week).filter(function (id) {
