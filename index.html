@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="7">
+<meta name="build" content="9">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -108,6 +108,7 @@ html, body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 16px;
+  text-align: center;
 }
 .eyebrow {
   margin: 0 0 4px;
@@ -118,22 +119,16 @@ html, body {
 }
 .card h2 {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
-.distance {
-  margin: 0;
-  font-size: 40px;
-  font-weight: 300;
-  line-height: 1.15;
+.card h2 .dist {
   color: var(--accent);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
-.distance .unit { font-size: 17px; color: var(--dim); margin-left: 4px; }
 .guidance { margin: 8px 0 0; color: var(--dim); font-size: 15px; }
-/* At night the card is paperwork, not a wake-up glance: same card, less shouting. */
-.card.compact h2 { font-size: 21px; font-weight: 500; }
 [hidden] { display: none !important; }
 
 /* 3. Log fields */
@@ -158,6 +153,7 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .field input::placeholder { color: #4d525a; }
+.field input { text-align: center; }
 
 /* Mark done */
 .done {
@@ -192,23 +188,44 @@ html, body {
 
 /* 4. Rest of the week + strength + anything else */
 .rest {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
   width: 100%;
-  min-height: var(--tap);
   margin: 0;
   padding: 0;
   background: none;
   border: 0;
   color: var(--dim);
   font: inherit;
-  font-size: 15px;
   text-align: left;
   cursor: pointer;
   border-radius: 8px;
 }
-.rest .chev { margin-left: auto; color: #4d525a; }
+.wk-head {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 600;
+}
+.wk-head .chev { margin-left: auto; color: #4d525a; font-size: 18px; }
+.wk-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 22px;
+  font-size: 15px;
+  color: var(--text);
+}
+.wk-line .val {
+  margin-left: auto;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.wk-line .day { color: #5c6069; font-size: 13px; width: 26px; text-align: right; }
+.wk-none { color: var(--dim); font-size: 15px; min-height: 22px; }
 
 .split { display: flex; gap: 10px; }
 .split .half {
@@ -457,55 +474,86 @@ html, body {
 .sheet-head { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
 .sheet-head h2 { margin: 0; font-size: 19px; font-weight: 600; }
 .back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   min-height: var(--tap);
-  min-width: var(--tap);
+  padding: 0 12px 0 8px;
   margin-left: -8px;
   background: none;
-  border: 0;
-  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
   font: inherit;
-  font-size: 17px;
+  font-size: 16px;
   cursor: pointer;
-  border-radius: 8px;
 }
 
 /* The ladder */
+.caption { margin: 0 0 10px; color: var(--dim); font-size: 14px; }
+.chart-wrap { position: relative; height: 180px; padding-left: 24px; }
+.grid { position: absolute; inset: 0; }
+.gline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--line);
+}
+.gline span {
+  position: absolute;
+  left: 0;
+  top: -7px;
+  font-size: 10px;
+  color: #5c6069;
+  font-variant-numeric: tabular-nums;
+}
 .chart {
+  position: absolute;
+  inset: 0 0 0 24px;
   display: flex;
   align-items: flex-end;
-  height: 210px;
-  margin-bottom: 6px;
 }
 .col {
   flex: 1;
+  position: relative;
   height: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  background: none;
-  border: 0;
-  padding: 0;
   cursor: pointer;
   border-radius: 4px;
 }
 .col .bar {
-  width: 74%;
-  min-height: 5px;
+  position: absolute;
+  left: 13%;
+  right: 13%;
+  bottom: 0;
+  min-height: 4px;
   border-radius: 3px 3px 0 0;
   background: var(--accent);
 }
-.col.deload .bar { background: #4a5b6b; }
-.col.gate .bar { background: #c9963f; }
-.col.race .bar { background: var(--text); }
+/* Namespaced on purpose: a bare .gate here collided with the full-screen
+   decision-gate overlay, which turned week 11's column into a fixed black
+   panel covering the whole view. */
+.col.t-deload .bar { background: #4a5b6b; }
+.col.t-gate .bar { background: #c9963f; }
+.col.t-race .bar { background: var(--text); }
 .col.future .bar { opacity: 0.32; }
 .col.now .bar { border-top: 3px solid var(--text); }
-.col.sel .bar { outline: 2px solid var(--focus); outline-offset: 1px; }
-.axis {
+.col.sel .bar {
+  left: 4%;
+  right: 4%;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--focus);
+}
+.col:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.ticks {
   display: flex;
-  justify-content: space-between;
+  padding-left: 24px;
+  margin: 4px 0 16px;
+}
+.ticks span {
+  flex: 1;
+  text-align: center;
   color: #5c6069;
-  font-size: 12px;
-  margin-bottom: 16px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
 }
 .detail {
   background: var(--surface);
@@ -616,9 +664,8 @@ html, body {
 
   <!-- 2. Primary card -->
   <section class="card" aria-labelledby="session-name">
-    <p class="eyebrow" id="card-eyebrow">Today</p>
+    <p class="eyebrow" id="card-eyebrow" hidden></p>
     <h2 id="session-name">Rest</h2>
-    <p class="distance" id="session-distance" hidden><span id="distance-value">0</span> <span class="unit">mi</span></p>
     <p class="guidance" id="session-guidance"></p>
 
     <!-- 3. Log fields -->
@@ -642,7 +689,10 @@ html, body {
   </section>
 
   <!-- 4. Rest of the week -->
-  <button type="button" class="rest" id="rest-line" aria-label="What is left this week"></button>
+  <button type="button" class="rest" id="rest-line" aria-label="This week — open to tick sessions off">
+    <span class="wk-head">This week<span class="chev" aria-hidden="true">›</span></span>
+    <span id="rest-lines"></span>
+  </button>
 
   <!-- Strength + anything else -->
   <div class="split" id="split-row">
@@ -719,9 +769,8 @@ html, body {
   <!-- Secondary views + export -->
   <footer class="footer">
     <div class="links">
-      <button type="button" id="open-week">This week</button>
       <button type="button" id="open-ladder">The ladder</button>
-      <button type="button" id="open-summary">Summary</button>
+      <button type="button" id="open-summary">Evening summary</button>
     </div>
     <p class="footnote" id="offline-note">Checking offline copy…</p>
     <button type="button" class="export" id="export">Export data</button>
@@ -734,7 +783,7 @@ html, body {
 <div class="sheet" id="week-sheet" hidden>
   <div class="sheet-inner">
     <div class="sheet-head">
-      <button type="button" class="back" id="week-back" aria-label="Back to today">&lsaquo;</button>
+      <button type="button" class="back" id="week-back">&lsaquo; Back</button>
       <h2 id="week-title">This week</h2>
     </div>
     <p class="hint">Tick them off in any order. The long run stays on Saturday.</p>
@@ -746,11 +795,15 @@ html, body {
 <div class="sheet" id="ladder-sheet" hidden>
   <div class="sheet-inner">
     <div class="sheet-head">
-      <button type="button" class="back" id="ladder-back" aria-label="Back to today">&lsaquo;</button>
+      <button type="button" class="back" id="ladder-back">&lsaquo; Back</button>
       <h2>The ladder</h2>
     </div>
-    <div class="chart" id="chart" role="group" aria-label="Long run distance, all 19 weeks"></div>
-    <div class="axis"><span>Week 1</span><span>Week 19</span></div>
+    <p class="caption">Saturday long run, week by week. Tap a bar.</p>
+    <div class="chart-wrap">
+      <div class="grid" id="grid" aria-hidden="true"></div>
+      <div class="chart" id="chart" role="group" aria-label="Long run distance, all 19 weeks"></div>
+    </div>
+    <div class="ticks" id="ticks" aria-hidden="true"></div>
     <div class="detail">
       <h3 id="d-week">Week 1</h3>
       <p class="big" id="d-long">Long run 2 mi</p>
@@ -774,7 +827,7 @@ html, body {
 <div class="sheet" id="summary-sheet" hidden>
   <div class="sheet-inner">
     <div class="sheet-head">
-      <button type="button" class="back" id="summary-back" aria-label="Back to today">&lsaquo;</button>
+      <button type="button" class="back" id="summary-back">&lsaquo; Back</button>
       <h2>Evening summary</h2>
     </div>
     <div class="summary" id="summary-body"></div>
@@ -1106,7 +1159,7 @@ function render() {
   renderClosedLine(week, dow);
 
   if (!started()) {
-    showRest("Week 1 starts Sunday. Nothing to do until then.", "Not yet");
+    showRest("Week 1 starts Sunday. Nothing to do until then.");
   } else {
     const already = ranToday(week);
     if (already && live) {
@@ -1115,11 +1168,14 @@ function render() {
       const s = todaysSession(week, dow);
       if (s && live) showRun(s, plan, evening);
       else if (s) showPreview(s, plan);
-      else showRest(restCopy(week, dow), "Today");
+      else showRest(restCopy(week, dow));
     }
   }
 
-  el("rest-line").hidden = evening;
+  /* Evenings are for the habits and tomorrow's list, so the week collapses to its
+     heading (still tappable) and the ring stands down until morning. */
+  el("rest-lines").hidden = evening;
+  el("ring-row").hidden = evening;
   el("tonight").hidden = !evening;
 
   renderRest(week, dow);
@@ -1196,15 +1252,26 @@ function renderClosedLine(week, dow) {
   }
 }
 
+/* Name and distance on one line: the date is already in the header, so a
+   "TODAY" label and a giant number were two lines the week could use better. */
+function sessionLine(s) {
+  const name = document.createElement("span");
+  name.textContent = s.name + (s.required ? "" : " (optional)") + " · ";
+  const dist = document.createElement("span");
+  dist.className = "dist";
+  dist.textContent = s.dist + " mi";
+
+  const h = el("session-name");
+  h.textContent = "";
+  h.appendChild(name);
+  h.appendChild(dist);
+}
+
 function showRun(s, plan, evening) {
-  const name = s.name + (s.required ? "" : " (optional)");
-  document.querySelector(".card").classList.toggle("compact", Boolean(evening));
-  el("card-eyebrow").textContent = "Today";
-  el("session-name").textContent = evening ? name + " · " + s.dist + " mi" : name;
-  el("distance-value").textContent = s.dist;
-  el("session-distance").hidden = Boolean(evening);
+  plainCard();
+  sessionLine(s);
   el("session-guidance").textContent = plan.note;
-  el("session-guidance").hidden = Boolean(evening);
+  el("session-guidance").hidden = Boolean(evening);   // coaching is a morning line
   el("log-fields").hidden = false;
   el("mark-done").hidden = false;
   el("mark-done").dataset.id = s.id;
@@ -1217,18 +1284,16 @@ function showRun(s, plan, evening) {
 function showPreview(s, plan) {
   plainCard();
   el("card-eyebrow").textContent = "That week";
-  el("session-name").textContent = s.name;
-  el("distance-value").textContent = s.dist;
-  el("session-distance").hidden = false;
+  el("card-eyebrow").hidden = false;
+  sessionLine(s);
   el("session-guidance").textContent = plan.note;
   el("log-fields").hidden = true;
   el("mark-done").hidden = true;
   el("undo").hidden = true;
 }
 
-/* Rest, done and preview cards are already short; they never need the night trim. */
 function plainCard() {
-  document.querySelector(".card").classList.remove("compact");
+  el("card-eyebrow").hidden = true;
   el("session-guidance").hidden = false;
 }
 
@@ -1239,9 +1304,7 @@ function showLogged(s) {
   if (log.miles) bits.push(log.miles + " mi");
   if (log.time) bits.push(log.time);
   if (log.effort) bits.push("effort " + log.effort);
-  el("card-eyebrow").textContent = "Today";
   el("session-name").textContent = "Done for today";
-  el("session-distance").hidden = true;
   el("session-guidance").textContent = bits.join(" · ") + ".";
   el("log-fields").hidden = true;
   el("mark-done").hidden = true;
@@ -1249,11 +1312,9 @@ function showLogged(s) {
   el("undo").dataset.id = s.id;
 }
 
-function showRest(copy, eyebrow) {
+function showRest(copy) {
   plainCard();
-  el("card-eyebrow").textContent = eyebrow;
   el("session-name").textContent = copy.split(".")[0];
-  el("session-distance").hidden = true;
   el("session-guidance").textContent = copy.slice(copy.indexOf(".") + 1).trim();
   el("log-fields").hidden = true;
   el("mark-done").hidden = true;
@@ -1267,22 +1328,38 @@ function renderRest(week, dow) {
     return !isDone(s.id) && s.id !== todayId;
   });
 
-  let text;
+  const box = el("rest-lines");
+  box.textContent = "";
+
   if (owed.length === 0) {
-    text = "Nothing else owed this week.";
-  } else {
-    text = "Also this week: " + owed.map(function (s) {
-      return s.name.toLowerCase() + " " + s.dist + " mi" + (s.required ? "" : " (optional)");
-    }).join(" · ") + ".";
+    const none = document.createElement("span");
+    none.className = "wk-none";
+    none.textContent = "Nothing else owed.";
+    box.appendChild(none);
+    return;
   }
 
-  const line = el("rest-line");
-  line.textContent = text;
-  const chev = document.createElement("span");
-  chev.className = "chev";
-  chev.setAttribute("aria-hidden", "true");
-  chev.textContent = "›";
-  line.appendChild(chev);
+  /* One line per session, distances lined up on the right. */
+  owed.forEach(function (s) {
+    const line = document.createElement("span");
+    line.className = "wk-line";
+
+    const name = document.createElement("span");
+    name.textContent = s.name + (s.required ? "" : " (optional)");
+
+    const val = document.createElement("span");
+    val.className = "val";
+    val.textContent = s.dist + " mi";
+
+    const day = document.createElement("span");
+    day.className = "day";
+    day.textContent = s.day === 6 ? "Sat" : (s.day === 5 ? "Fri" : "");
+
+    line.appendChild(name);
+    line.appendChild(val);
+    line.appendChild(day);
+    box.appendChild(line);
+  });
 }
 
 function renderStrength(week) {
@@ -1514,12 +1591,7 @@ function drawWeekList() {
   });
 }
 
-function openWeekSheet() {
-  drawWeekList();
-  openSheet("week-sheet", el("open-week"));
-}
 
-el("open-week").addEventListener("click", openWeekSheet);
 el("rest-line").addEventListener("click", function () {
   drawWeekList();
   openSheet("week-sheet", el("rest-line"));
@@ -1532,9 +1604,9 @@ let selectedWeek = 1;
 
 function weekTag(week) {
   const tag = PLAN[week - 1].tag;
-  if (tag === "race") return "race";
-  if (tag === "gate") return "gate";
-  if (tag === "deload") return "deload";
+  if (tag === "race") return "t-race";
+  if (tag === "gate") return "t-gate";
+  if (tag === "deload") return "t-deload";
   return "";
 }
 
@@ -1546,40 +1618,78 @@ function openLadder() {
 
 function drawLadder() {
   const chart = el("chart");
+  const grid = el("grid");
+  const ticks = el("ticks");
   const now = currentWeek();
   const tallest = PLAN.reduce(function (max, p) {
     return Math.max(max, longFor(p.week));
   }, 0);
+  const top = Math.ceil(tallest / 5) * 5;   // clean scale, so the gridlines land on round numbers
+
+  grid.textContent = "";
+  for (let miles = 5; miles < top; miles += 5) {
+    const line = document.createElement("div");
+    line.className = "gline";
+    line.style.bottom = (miles / top) * 100 + "%";
+    const tag = document.createElement("span");
+    tag.textContent = miles;
+    line.appendChild(tag);
+    grid.appendChild(line);
+  }
 
   chart.textContent = "";
+  ticks.textContent = "";
+
   PLAN.forEach(function (p) {
     const dist = longFor(p.week);
-    const col = document.createElement("button");
-    col.type = "button";
+
+    const col = document.createElement("div");
     col.className = ["col", weekTag(p.week),
       p.week > now ? "future" : "",
       p.week === now ? "now" : "",
       p.week === selectedWeek ? "sel" : ""].filter(Boolean).join(" ");
+    col.dataset.week = p.week;
+    col.setAttribute("role", "button");
+    col.setAttribute("tabindex", "0");
+    col.setAttribute("aria-pressed", String(p.week === selectedWeek));
     col.setAttribute("aria-label",
       "Week " + p.week + ", long run " + dist + " miles" +
       (p.week === now ? ", this week" : "") +
       (p.tag ? ", " + p.tag : ""));
-    col.setAttribute("aria-pressed", String(p.week === selectedWeek));
 
     const bar = document.createElement("span");
     bar.className = "bar";
-    bar.style.height = Math.max(5, Math.round((dist / tallest) * 210)) + "px";
-
+    bar.style.height = (dist / top) * 100 + "%";
     col.appendChild(bar);
-    col.addEventListener("click", function () {
-      selectedWeek = p.week;
-      drawLadder();
-    });
     chart.appendChild(col);
+
+    const tick = document.createElement("span");
+    tick.textContent = (p.week === 1 || p.week % 5 === 0 || p.week === TOTAL_WEEKS) ? p.week : "";
+    ticks.appendChild(tick);
   });
 
   drawDetail();
 }
+
+function pickWeek(target) {
+  const col = target && target.closest ? target.closest(".col") : null;
+  if (!col) return false;
+  selectedWeek = Number(col.dataset.week);
+  drawLadder();
+  return true;
+}
+
+el("chart").addEventListener("click", function (event) {
+  pickWeek(event.target);
+});
+
+el("chart").addEventListener("keydown", function (event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  if (!pickWeek(event.target)) return;
+  event.preventDefault();
+  const again = el("chart").querySelector('[data-week="' + selectedWeek + '"]');
+  if (again) again.focus();
+});
 
 function drawDetail() {
   const p = PLAN[selectedWeek - 1];
