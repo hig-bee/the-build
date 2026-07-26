@@ -299,6 +299,119 @@ html, body {
 .ring-text strong { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ring-text span { font-size: 14px; color: var(--dim); }
 
+/* Secondary views */
+.links { display: flex; gap: 10px; }
+.links button {
+  flex: 1;
+  min-height: var(--tap);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: var(--bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: max(12px, env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+}
+.sheet-inner { max-width: 480px; margin: 0 auto; }
+.sheet-head { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+.sheet-head h2 { margin: 0; font-size: 19px; font-weight: 600; }
+.back {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  margin-left: -8px;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+/* The ladder */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  height: 210px;
+  margin-bottom: 6px;
+}
+.col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.col .bar {
+  width: 74%;
+  min-height: 5px;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent);
+}
+.col.deload .bar { background: #4a5b6b; }
+.col.gate .bar { background: #c9963f; }
+.col.race .bar { background: var(--text); }
+.col.future .bar { opacity: 0.32; }
+.col.now .bar { border-top: 3px solid var(--text); }
+.col.sel .bar { outline: 2px solid var(--focus); outline-offset: 1px; }
+.axis {
+  display: flex;
+  justify-content: space-between;
+  color: #5c6069;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+.detail {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.detail h3 { margin: 0 0 2px; font-size: 20px; font-weight: 600; }
+.detail .big { margin: 0; font-size: 15px; color: var(--text); }
+.detail .sub { margin: 6px 0 0; color: var(--dim); font-size: 15px; }
+.detail .closed-note { margin: 8px 0 0; color: var(--dim); font-size: 14px; }
+.step {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.step button {
+  flex: 1;
+  min-height: var(--tap);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.step button:disabled { opacity: 0.3; cursor: default; }
+
+/* Evening summary */
+.summary p {
+  margin: 0 0 14px;
+  font-size: 19px;
+  line-height: 1.5;
+}
+.summary p:last-child { color: var(--dim); }
+
 /* Decision gate */
 .gate {
   position: fixed;
@@ -455,14 +568,52 @@ html, body {
     <p class="ring-text"><strong id="ring-count">0 of 3</strong><span>sessions this week</span></p>
   </section>
 
-  <!-- Export -->
+  <!-- Secondary views + export -->
   <footer class="footer">
+    <div class="links">
+      <button type="button" id="open-ladder">The ladder</button>
+      <button type="button" id="open-summary">Evening summary</button>
+    </div>
     <p class="footnote" id="offline-note">Checking offline copy…</p>
     <button type="button" class="export" id="export">Export data</button>
-    <p class="footnote">Everything logged so far, as a file you keep. · Build 3</p>
+    <p class="footnote">Everything logged so far, as a file you keep. · Build 4</p>
   </footer>
 
 </main>
+
+<!-- The ladder -->
+<div class="sheet" id="ladder-sheet" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <button type="button" class="back" id="ladder-back" aria-label="Back to today">&lsaquo;</button>
+      <h2>The ladder</h2>
+    </div>
+    <div class="chart" id="chart" role="group" aria-label="Long run distance, all 19 weeks"></div>
+    <div class="axis"><span>Week 1</span><span>Week 19</span></div>
+    <div class="detail">
+      <h3 id="d-week">Week 1</h3>
+      <p class="big" id="d-long">Long run 2 mi</p>
+      <p class="sub" id="d-rest"></p>
+      <p class="sub" id="d-note"></p>
+      <p class="closed-note" id="d-closed" hidden></p>
+      <div class="step">
+        <button type="button" id="d-prev">&lsaquo; Earlier</button>
+        <button type="button" id="d-next">Later &rsaquo;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Evening summary -->
+<div class="sheet" id="summary-sheet" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head">
+      <button type="button" class="back" id="summary-back" aria-label="Back to today">&lsaquo;</button>
+      <h2>Evening summary</h2>
+    </div>
+    <div class="summary" id="summary-body"></div>
+  </div>
+</div>
 
 <!-- Week 11 decision gate -->
 <div class="gate" id="gate" hidden>
@@ -1059,6 +1210,182 @@ el("reset-week").addEventListener("click", function () {
   save();
   render();
 });
+
+/* ---------- secondary views ---------- */
+
+let lastFocus = null;
+
+function openSheet(id, opener) {
+  lastFocus = opener;
+  el(id).hidden = false;
+  el(id).querySelector(".back").focus();
+}
+
+/* Send focus back to the button that opened the view, never leave it on the
+   button that just disappeared. */
+function closeSheet(id) {
+  el(id).hidden = true;
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+
+document.addEventListener("keydown", function (event) {
+  if (event.key !== "Escape") return;
+  ["ladder-sheet", "summary-sheet"].forEach(function (id) {
+    if (!el(id).hidden) closeSheet(id);
+  });
+});
+
+/* ---------- the ladder (§4.2) ---------- */
+
+let selectedWeek = 1;
+
+function weekTag(week) {
+  const tag = PLAN[week - 1].tag;
+  if (tag === "race") return "race";
+  if (tag === "gate") return "gate";
+  if (tag === "deload") return "deload";
+  return "";
+}
+
+function openLadder() {
+  selectedWeek = currentWeek();
+  drawLadder();
+  openSheet("ladder-sheet", el("open-ladder"));
+}
+
+function drawLadder() {
+  const chart = el("chart");
+  const now = currentWeek();
+  const tallest = PLAN.reduce(function (max, p) {
+    return Math.max(max, longFor(p.week));
+  }, 0);
+
+  chart.textContent = "";
+  PLAN.forEach(function (p) {
+    const dist = longFor(p.week);
+    const col = document.createElement("button");
+    col.type = "button";
+    col.className = ["col", weekTag(p.week),
+      p.week > now ? "future" : "",
+      p.week === now ? "now" : "",
+      p.week === selectedWeek ? "sel" : ""].filter(Boolean).join(" ");
+    col.setAttribute("aria-label",
+      "Week " + p.week + ", long run " + dist + " miles" +
+      (p.week === now ? ", this week" : "") +
+      (p.tag ? ", " + p.tag : ""));
+    col.setAttribute("aria-pressed", String(p.week === selectedWeek));
+
+    const bar = document.createElement("span");
+    bar.className = "bar";
+    bar.style.height = Math.max(5, Math.round((dist / tallest) * 210)) + "px";
+
+    col.appendChild(bar);
+    col.addEventListener("click", function () {
+      selectedWeek = p.week;
+      drawLadder();
+    });
+    chart.appendChild(col);
+  });
+
+  drawDetail();
+}
+
+function drawDetail() {
+  const p = PLAN[selectedWeek - 1];
+  const now = currentWeek();
+  const long = longFor(selectedWeek);
+
+  el("d-week").textContent = "Week " + selectedWeek +
+    (selectedWeek === now ? " — this week" : "");
+  el("d-long").textContent = (selectedWeek === TOTAL_WEEKS ? "Race" : "Long run") +
+    " " + long + " mi";
+
+  const rest = ["easy " + p.easy, "moderate " + p.mod];
+  if (p.fri > 0) rest.push("Friday shakeout " + p.fri + " (optional)");
+  el("d-rest").textContent = "Also: " + rest.join(", ") + ".";
+  el("d-note").textContent = p.note;
+
+  const closed = state.weekHistory.find(function (h) { return h.week === selectedWeek; });
+  el("d-closed").hidden = !closed;
+  if (closed) {
+    el("d-closed").textContent = "Closed — " + closed.done + " of " + closed.planned + " runs.";
+  }
+
+  el("d-prev").disabled = selectedWeek <= 1;
+  el("d-next").disabled = selectedWeek >= TOTAL_WEEKS;
+}
+
+function stepWeek(n) {
+  selectedWeek = clamp(selectedWeek + n, 1, TOTAL_WEEKS);
+  drawLadder();
+}
+
+el("open-ladder").addEventListener("click", openLadder);
+el("ladder-back").addEventListener("click", function () { closeSheet("ladder-sheet"); });
+el("d-prev").addEventListener("click", function () { stepWeek(-1); });
+el("d-next").addEventListener("click", function () { stepWeek(1); });
+
+/* ---------- evening summary (§4.3) ---------- */
+
+const COUNTS = ["Nothing", "One", "Two", "Three", "Four", "Five", "Six"];
+
+function summaryLines() {
+  const now = today();
+  const dow = now.getDay();
+  const week = currentWeek();
+  const stamp = ymd(now);
+  const lines = [];
+
+  if (!started()) {
+    return [DAYS[dow] + ".", "Week 1 hasn't started yet."];
+  }
+
+  lines.push(DAYS[dow] + ", Week " + week + ".");
+
+  const ran = ranToday(week);
+  if (ran) {
+    const log = state.logs[ran.id] || {};
+    const bits = [ran.name];
+    bits.push((log.miles || ran.dist) + " miles");
+    if (log.time) bits.push(log.time);
+    if (log.effort) bits.push("effort " + log.effort);
+    lines.push(bits.join(", ") + ".");
+  } else if (todaysSession(week, dow)) {
+    lines.push("No run logged.");
+  } else {
+    lines.push("Rest day.");
+  }
+
+  const strength = strengthIds(week).filter(function (id) {
+    return state.completed[id] === stamp;
+  }).length;
+  if (strength) lines.push("Strength done.");
+
+  const habits = state.habits[stamp] || {};
+  if (habits.shutdown) lines.push("Phone away at " + habits.shutdown + ".");
+  if (habits.diary) lines.push("Diary at " + habits.diary + ".");
+
+  const left = requiredRuns(week).filter(function (s) { return !isDone(s.id); }).length;
+  lines.push(left === 0
+    ? "Nothing left to run this week."
+    : (COUNTS[left] || left) + (left === 1 ? " session" : " sessions") + " left this week.");
+
+  return lines;
+}
+
+function openSummary() {
+  const body = el("summary-body");
+  body.textContent = "";
+  summaryLines().forEach(function (line) {
+    const p = document.createElement("p");
+    p.textContent = line;
+    body.appendChild(p);
+  });
+  openSheet("summary-sheet", el("open-summary"));
+}
+
+el("open-summary").addEventListener("click", openSummary);
+el("summary-back").addEventListener("click", function () { closeSheet("summary-sheet"); });
 
 /* On iPhone a plain download is unreliable inside a home screen app, so hand the
    file to the share sheet (Files, Mail, AirDrop) and fall back to a download. */
