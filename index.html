@@ -459,6 +459,7 @@ html, body {
   <footer class="footer">
     <button type="button" class="export" id="export">Export data</button>
     <p class="footnote">Everything logged so far, as a file you keep.</p>
+    <p class="footnote" id="offline-note" hidden></p>
   </footer>
 
 </main>
@@ -1115,10 +1116,29 @@ closeWeeks();
 pruneTasks();
 render();
 
-/* Only works once the app is served over https; harmless everywhere else. */
+/* Offline support only works once the app is served over https; harmless everywhere
+   else. The note says plainly whether the phone has its own copy yet, so the only way
+   to find out is not standing in a driveway with no signal. */
+function offlineNote(text) {
+  el("offline-note").textContent = text;
+  el("offline-note").hidden = false;
+}
+
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./sw.js").catch(function () {});
+    navigator.serviceWorker.register("./sw.js").then(function () {
+      return navigator.serviceWorker.ready;
+    }).then(function () {
+      offlineNote(navigator.serviceWorker.controller
+        ? "Offline copy saved. Works with no signal."
+        : "Saving offline copy — close and reopen once to finish.");
+    }).catch(function () {
+      offlineNote("Offline copy failed. Check sw.js uploaded.");
+    });
+
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      offlineNote("Offline copy saved. Works with no signal.");
+    });
   });
 }
 </script>
