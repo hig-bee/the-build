@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
+<meta name="build" content="5">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -576,7 +577,7 @@ html, body {
     </div>
     <p class="footnote" id="offline-note">Checking offline copy…</p>
     <button type="button" class="export" id="export">Export data</button>
-    <p class="footnote">Everything logged so far, as a file you keep. · Build 4</p>
+    <p class="footnote" id="build-note">Everything logged so far, as a file you keep.</p>
   </footer>
 
 </main>
@@ -1446,8 +1447,58 @@ render();
 /* Offline support only works once the app is served over https; harmless everywhere
    else. The note says plainly whether the phone has its own copy yet, so the only way
    to find out is not standing in a driveway with no signal. */
+/* One source of truth for the build number: the meta tag in the head. */
+const BUILD = Number(document.querySelector('meta[name="build"]').content);
+el("build-note").textContent = "Everything logged so far, as a file you keep. · Build " + BUILD;
+
 function offlineNote(text) {
   el("offline-note").textContent = text;
+}
+
+/* iPhone home screen apps can get stuck on an old saved copy, and the file that
+   would fix that is itself part of what got stuck. So the app checks for itself:
+   the unique query string means no cache can answer this, only the server can.
+   If the server has something newer, throw the saved copy away and start clean. */
+function checkForUpdate() {
+  if (location.protocol.indexOf("http") !== 0) return;
+
+  fetch("./index.html?check=" + Date.now(), { cache: "no-store" })
+    .then(function (response) { return response.ok ? response.text() : null; })
+    .then(function (html) {
+      if (!html) return;
+      const found = html.match(/<meta name="build" content="(\d+)"/);
+      if (!found) return;
+      if (Number(found[1]) <= BUILD) return;
+
+      /* One automatic attempt per session, so a stubborn cache can't loop us. */
+      if (sessionStorage.getItem("update-tried")) {
+        offlineNote("Update ready. Close the app fully and reopen.");
+        return;
+      }
+      try { sessionStorage.setItem("update-tried", "1"); } catch (e) {}
+      offlineNote("Newer version found. Updating…");
+      return wipeAndReload();
+    })
+    .catch(function () {});
+}
+
+function wipeAndReload() {
+  const jobs = [];
+
+  if (window.caches && caches.keys) {
+    jobs.push(caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+    }));
+  }
+  if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+    jobs.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+      return Promise.all(regs.map(function (reg) { return reg.unregister(); }));
+    }));
+  }
+
+  /* Only the cached app is thrown away. Logged runs live in localStorage and are
+     never touched by any of this. */
+  return Promise.all(jobs).then(function () { location.reload(); });
 }
 
 if (location.protocol.indexOf("http") !== 0) {
@@ -1471,6 +1522,8 @@ if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
     navigator.serviceWorker.addEventListener("controllerchange", function () {
       offlineNote("Offline copy saved. Works with no signal.");
     });
+
+    checkForUpdate();
   });
 }
 </script>
