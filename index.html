@@ -549,11 +549,42 @@ html, body {
 
 /* Evening summary */
 .summary p {
-  margin: 0 0 14px;
-  font-size: 19px;
-  line-height: 1.5;
+  margin: 0 0 16px;
+  font-size: 21px;
+  line-height: 1.55;
 }
 .summary p:last-child { color: var(--dim); }
+
+.wtd { margin-top: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+.wtd h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 600;
+}
+.wtd .row { display: flex; gap: 12px; font-size: 16px; padding: 4px 0; }
+.wtd .d { width: 40px; flex: none; color: var(--dim); }
+.wtd .none { color: #5c6069; }
+.wtd .row.today .d { color: var(--accent); }
+
+.quote {
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--dim);
+  font-size: 16px;
+  line-height: 1.5;
+  font-style: italic;
+}
+.quote .who {
+  display: block;
+  margin-top: 8px;
+  font-style: normal;
+  font-size: 13px;
+  color: #5c6069;
+}
 
 /* Decision gate */
 .gate {
@@ -784,6 +815,8 @@ html, body {
       <h2>Evening summary</h2>
     </div>
     <div class="summary" id="summary-body"></div>
+    <div class="wtd" id="summary-week"></div>
+    <p class="quote" id="summary-quote"></p>
   </div>
 </div>
 
