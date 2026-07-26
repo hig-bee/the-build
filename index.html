@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="9">
+<meta name="build" content="12">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -89,8 +89,8 @@ html, body {
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 4px 6px;
-  min-height: 32px;
+  padding: 0 6px;
+  min-height: var(--tap);
   cursor: pointer;
   border-radius: 8px;
 }
@@ -171,19 +171,17 @@ html, body {
 }
 .done:active { filter: brightness(0.9); }
 
-.undo {
-  margin-top: 10px;
+.done-row { display: flex; gap: 10px; margin-top: 12px; }
+.done-row button {
+  flex: 1;
+  min-height: var(--tap);
   background: none;
-  border: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   color: var(--dim);
   font: inherit;
   font-size: 15px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 12px 4px;
-  min-height: var(--tap);
   cursor: pointer;
-  border-radius: 8px;
 }
 
 /* 4. Rest of the week + strength + anything else */
@@ -227,53 +225,18 @@ html, body {
 .wk-line .day { color: #5c6069; font-size: 13px; width: 26px; text-align: right; }
 .wk-none { color: var(--dim); font-size: 15px; min-height: 22px; }
 
-.split { display: flex; gap: 10px; }
-.split .half {
-  flex: 1;
+.other {
+  width: 100%;
   min-height: var(--tap);
+  padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: none;
   color: var(--text);
   font: inherit;
   font-size: 15px;
-}
-.strength {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 6px 0 12px;
-  color: var(--dim);
-}
-.strength .lbl { margin-right: auto; }
-.mini {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  min-height: var(--tap);
   cursor: pointer;
 }
-.mini input { position: absolute; opacity: 0; width: 0; height: 0; }
-.mini .box {
-  width: 22px;
-  height: 22px;
-  border: 1.5px solid #3a3f47;
-  border-radius: 6px;
-}
-.mini input:checked + .box { background: var(--accent); border-color: var(--accent); }
-.mini input:checked + .box::after {
-  content: "";
-  display: block;
-  width: 5px;
-  height: 11px;
-  margin: 1px auto 0;
-  border: solid #12100e;
-  border-width: 0 2.5px 2.5px 0;
-  transform: rotate(45deg);
-}
-.mini input:focus-visible + .box { outline: 2px solid var(--focus); outline-offset: 2px; }
-.other { cursor: pointer; padding: 0 8px; }
 
 .other-input { display: flex; gap: 8px; }
 .other-input input {
@@ -655,7 +618,7 @@ html, body {
       <button type="button" class="nudge" id="prev" aria-label="Previous week">&lsaquo;</button>
       <h1 id="week-label">Week 1 <span class="of">/ 19</span></h1>
       <button type="button" class="nudge" id="next" aria-label="Next week">&rsaquo;</button>
-      <button type="button" class="reset" id="reset-week" hidden>manual · reset</button>
+      <button type="button" class="reset" id="reset-week" aria-label="Back to the current week" hidden>&#8617; Today</button>
     </div>
     <p class="date" id="date-label"></p>
   </header>
@@ -685,7 +648,10 @@ html, body {
     </div>
 
     <button type="button" class="done" id="mark-done" hidden>Mark done</button>
-    <button type="button" class="undo" id="undo" hidden>Undo</button>
+    <div class="done-row" id="done-row" hidden>
+      <button type="button" id="edit">Edit</button>
+      <button type="button" id="undo">Undo</button>
+    </div>
   </section>
 
   <!-- 4. Rest of the week -->
@@ -694,21 +660,8 @@ html, body {
     <span id="rest-lines"></span>
   </button>
 
-  <!-- Strength + anything else -->
-  <div class="split" id="split-row">
-    <div class="half strength">
-      <span class="lbl">Strength</span>
-      <label class="mini">
-        <input type="checkbox" id="str-0" aria-label="Strength session 1 of 2, optional">
-        <span class="box" aria-hidden="true"></span>
-      </label>
-      <label class="mini">
-        <input type="checkbox" id="str-1" aria-label="Strength session 2 of 2, optional">
-        <span class="box" aria-hidden="true"></span>
-      </label>
-    </div>
-    <button type="button" class="half other" id="open-other">+ Something else</button>
-  </div>
+  <!-- Anything that isn't on the plan -->
+  <button type="button" class="other" id="open-other">+ Something else</button>
 
   <div class="other-input" id="other-input" hidden>
     <input type="text" id="other-what" maxlength="40" enterkeyhint="done" placeholder="Walked" aria-label="What you did">
@@ -983,6 +936,15 @@ function currentWeek() {
   return clamp(autoWeek() + state.weekShift, 1, TOTAL_WEEKS);
 }
 
+/* Sunday through Saturday of whichever week is being looked at. */
+function weekRange(week) {
+  const start = addDays(fromYmd(state.startDate), (week - 1) * 7);
+  const end = addDays(start, 6);
+  const short = function (d) { return MONTHS[d.getMonth()].slice(0, 3); };
+  return short(start) + " " + start.getDate() + " – " +
+    (start.getMonth() === end.getMonth() ? "" : short(end) + " ") + end.getDate();
+}
+
 function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n));
 }
@@ -1142,6 +1104,9 @@ function closeWeeks() {
 
 const el = function (id) { return document.getElementById(id); };
 
+/* The session whose numbers are open for correction, if any. */
+let editingId = null;
+
 function render() {
   const now = today();
   const dow = now.getDay();
@@ -1151,7 +1116,11 @@ function render() {
   const evening = isEvening();
 
   el("week-label").innerHTML = "Week " + week + ' <span class="of">/ ' + TOTAL_WEEKS + "</span>";
-  el("date-label").textContent = DAYS[dow] + ", " + MONTHS[now.getMonth()] + " " + now.getDate();
+  /* Today's date only while today is what you're looking at; step away from the
+     live week and the header shows that week's dates instead. */
+  el("date-label").textContent = live
+    ? DAYS[dow] + ", " + MONTHS[now.getMonth()] + " " + now.getDate()
+    : weekRange(week);
   el("prev").disabled = week <= 1;
   el("next").disabled = week >= TOTAL_WEEKS;
   el("reset-week").hidden = state.weekShift === 0;
@@ -1179,7 +1148,6 @@ function render() {
   el("tonight").hidden = !evening;
 
   renderRest(week, dow);
-  renderStrength(week);
   renderExtra();
   renderTasks(evening);
   renderHabits();
@@ -1274,9 +1242,10 @@ function showRun(s, plan, evening) {
   el("session-guidance").hidden = Boolean(evening);   // coaching is a morning line
   el("log-fields").hidden = false;
   el("mark-done").hidden = false;
+  el("mark-done").textContent = "Mark done";
   el("mark-done").dataset.id = s.id;
   el("mark-done").dataset.dist = s.dist;
-  el("undo").hidden = true;
+  el("done-row").hidden = true;
   el("in-miles").placeholder = String(s.dist);
 }
 
@@ -1289,7 +1258,7 @@ function showPreview(s, plan) {
   el("session-guidance").textContent = plan.note;
   el("log-fields").hidden = true;
   el("mark-done").hidden = true;
-  el("undo").hidden = true;
+  el("done-row").hidden = true;
 }
 
 function plainCard() {
@@ -1297,19 +1266,36 @@ function plainCard() {
   el("session-guidance").hidden = false;
 }
 
+/* Two ways in: Mark done on the card, or a tick in the week checklist. Only the
+   first asks for miles, so the logged numbers stay editable for the day. */
 function showLogged(s) {
   plainCard();
   const log = state.logs[s.id] || {};
+  const editing = editingId === s.id;
+
   const bits = [s.name];
-  if (log.miles) bits.push(log.miles + " mi");
+  bits.push((log.miles || s.dist) + " mi");
   if (log.time) bits.push(log.time);
   if (log.effort) bits.push("effort " + log.effort);
-  el("session-name").textContent = "Done for today";
+
+  el("session-name").textContent = editing ? s.name : "Done for today";
   el("session-guidance").textContent = bits.join(" · ") + ".";
-  el("log-fields").hidden = true;
-  el("mark-done").hidden = true;
-  el("undo").hidden = false;
+  el("session-guidance").hidden = editing;
+  el("log-fields").hidden = !editing;
+  el("mark-done").hidden = !editing;
+  el("done-row").hidden = editing;
+  el("edit").dataset.id = s.id;
   el("undo").dataset.id = s.id;
+
+  if (editing) {
+    el("mark-done").textContent = "Save";
+    el("mark-done").dataset.id = s.id;
+    el("mark-done").dataset.dist = s.dist;
+    el("in-miles").value = log.miles || "";
+    el("in-time").value = log.time || "";
+    el("in-effort").value = log.effort || "";
+    el("in-miles").placeholder = String(s.dist);
+  }
 }
 
 function showRest(copy) {
@@ -1318,7 +1304,7 @@ function showRest(copy) {
   el("session-guidance").textContent = copy.slice(copy.indexOf(".") + 1).trim();
   el("log-fields").hidden = true;
   el("mark-done").hidden = true;
-  el("undo").hidden = true;
+  el("done-row").hidden = true;
 }
 
 function renderRest(week, dow) {
@@ -1331,41 +1317,47 @@ function renderRest(week, dow) {
   const box = el("rest-lines");
   box.textContent = "";
 
-  if (owed.length === 0) {
+  /* One line per session, distances lined up on the right. */
+  function line(name, value, day) {
+    const row = document.createElement("span");
+    row.className = "wk-line";
+
+    const left = document.createElement("span");
+    left.textContent = name;
+
+    const val = document.createElement("span");
+    val.className = "val";
+    val.textContent = value;
+
+    const suffix = document.createElement("span");
+    suffix.className = "day";
+    suffix.textContent = day || "";
+
+    row.appendChild(left);
+    row.appendChild(val);
+    row.appendChild(suffix);
+    box.appendChild(row);
+  }
+
+  owed.forEach(function (s) {
+    line(s.name + (s.required ? "" : " (optional)"),
+         s.dist + " mi",
+         s.day === 6 ? "Sat" : (s.day === 5 ? "Fri" : ""));
+  });
+
+  /* Strength lives here rather than as buttons on the main screen: it is the
+     rarest thing in the week and was taking the most room. */
+  const strengthLeft = 2 - strengthDone(week);
+  if (strengthLeft > 0) {
+    line("Strength", strengthLeft === 2 ? "optional" : strengthLeft + " left");
+  }
+
+  if (!box.childNodes.length) {
     const none = document.createElement("span");
     none.className = "wk-none";
     none.textContent = "Nothing else owed.";
     box.appendChild(none);
-    return;
   }
-
-  /* One line per session, distances lined up on the right. */
-  owed.forEach(function (s) {
-    const line = document.createElement("span");
-    line.className = "wk-line";
-
-    const name = document.createElement("span");
-    name.textContent = s.name + (s.required ? "" : " (optional)");
-
-    const val = document.createElement("span");
-    val.className = "val";
-    val.textContent = s.dist + " mi";
-
-    const day = document.createElement("span");
-    day.className = "day";
-    day.textContent = s.day === 6 ? "Sat" : (s.day === 5 ? "Fri" : "");
-
-    line.appendChild(name);
-    line.appendChild(val);
-    line.appendChild(day);
-    box.appendChild(line);
-  });
-}
-
-function renderStrength(week) {
-  const ids = strengthIds(week);
-  el("str-0").checked = isDone(ids[0]);
-  el("str-1").checked = isDone(ids[1]);
 }
 
 function renderExtra() {
@@ -1405,12 +1397,14 @@ el("mark-done").addEventListener("click", function () {
   const time = el("in-time").value.trim();
   const effort = el("in-effort").value.trim();
 
-  state.completed[id] = ymd(today());
+  /* Editing keeps the day it was originally logged. */
+  state.completed[id] = state.completed[id] || ymd(today());
   state.logs[id] = {
     miles: Number(miles || this.dataset.dist),
     time: time,
     effort: effort ? clamp(Number(effort), 1, 10) : null
   };
+  editingId = null;
   el("in-miles").value = "";
   el("in-time").value = "";
   el("in-effort").value = "";
@@ -1418,18 +1412,17 @@ el("mark-done").addEventListener("click", function () {
   render();
 });
 
-el("undo").addEventListener("click", function () {
-  delete state.completed[this.dataset.id];
-  delete state.logs[this.dataset.id];
-  save();
+el("edit").addEventListener("click", function () {
+  editingId = this.dataset.id;
   render();
 });
 
-/* Strength is two checkboxes now: tap to tick, tap again to take it back. */
-[0, 1].forEach(function (i) {
-  el("str-" + i).addEventListener("change", function () {
-    toggleSession(strengthIds(currentWeek())[i], null);
-  });
+el("undo").addEventListener("click", function () {
+  delete state.completed[this.dataset.id];
+  delete state.logs[this.dataset.id];
+  editingId = null;
+  save();
+  render();
 });
 
 /* Ticking anything writes today's date and the planned distance; unticking
@@ -1455,7 +1448,7 @@ el("open-other").addEventListener("click", function () {
   const extra = state.extras[ymd(today())] || {};
   el("other-what").value = extra.what || "";
   el("other-miles").value = extra.miles || "";
-  el("split-row").hidden = true;
+  el("open-other").hidden = true;
   el("other-input").hidden = false;
   el("other-what").focus();
 });
@@ -1472,7 +1465,7 @@ el("other-save").addEventListener("click", function () {
   }
 
   el("other-input").hidden = true;
-  el("split-row").hidden = false;
+  el("open-other").hidden = false;
   save();
   render();
 });
