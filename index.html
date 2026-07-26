@@ -457,9 +457,9 @@ html, body {
 
   <!-- Export -->
   <footer class="footer">
+    <p class="footnote" id="offline-note">Checking offline copy…</p>
     <button type="button" class="export" id="export">Export data</button>
     <p class="footnote">Everything logged so far, as a file you keep.</p>
-    <p class="footnote" id="offline-note" hidden></p>
   </footer>
 
 </main>
@@ -1121,7 +1121,12 @@ render();
    to find out is not standing in a driveway with no signal. */
 function offlineNote(text) {
   el("offline-note").textContent = text;
-  el("offline-note").hidden = false;
+}
+
+if (location.protocol.indexOf("http") !== 0) {
+  offlineNote("Offline copy: only applies once the app is on the web.");
+} else if (!("serviceWorker" in navigator)) {
+  offlineNote("Offline copy: this browser can't save one.");
 }
 
 if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
