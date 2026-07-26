@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0c0d0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Build">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<title>The Build</title>
+<style>
+:root {
+  --bg: #0c0d0f;
+  --surface: #16181c;
+  --line: #23262c;
+  --text: #e8e6e3;
+  --dim: #8b8f96;
+  --accent: #d9713f;
+  --focus: #6fa8dc;
+  --radius: 14px;
+  --tap: 44px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 17px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.screen {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: max(12px, env(safe-area-inset-top)) 18px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 1. Header */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.head-week { display: flex; align-items: center; gap: 2px; }
+.head h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.head .of { color: var(--dim); font-weight: 400; }
+.head .date { margin: 0; color: var(--dim); font-size: 15px; text-align: right; }
+
+.nudge {
+  width: 34px;
+  min-height: var(--tap);
+  background: none;
+  border: 0;
+  color: #4d525a;
+  font-size: 20px;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.nudge:disabled { opacity: 0.3; cursor: default; }
+.reset {
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 6px;
+  min-height: 32px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+/* Closed-week line */
+.closed {
+  margin: -4px 0 0;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+/* 2. Primary card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.card h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.distance {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1.15;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.distance .unit { font-size: 17px; color: var(--dim); margin-left: 4px; }
+.guidance { margin: 8px 0 0; color: var(--dim); font-size: 15px; }
+/* At night the card is paperwork, not a wake-up glance: same card, less shouting. */
+.card.compact h2 { font-size: 21px; font-weight: 500; }
+[hidden] { display: none !important; }
+
+/* 3. Log fields */
+.log {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field span { font-size: 12px; color: var(--dim); letter-spacing: 0.04em; }
+.field input {
+  min-height: var(--tap);
+  width: 100%;
+  background: #0f1114;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 17px;
+  padding: 0 10px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.field input::placeholder { color: #4d525a; }
+
+/* Mark done */
+.done {
+  margin-top: 12px;
+  width: 100%;
+  min-height: 52px;
+  background: var(--accent);
+  color: #12100e;
+  border: 0;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.done:active { filter: brightness(0.9); }
+
+.undo {
+  margin-top: 10px;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 12px 4px;
+  min-height: var(--tap);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+/* 4. Rest of the week + strength */
+.rest { margin: 0; color: var(--dim); font-size: 15px; }
+
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  padding: 8px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.strength .plus { color: var(--accent); font-size: 20px; line-height: 1; }
+.strength .count { margin-left: auto; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.strength .sub { display: block; color: var(--dim); font-size: 13px; }
+
+/* 5. Tonight + lists */
+.tonight, .list {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+}
+.tonight h3, .list h3 {
+  margin: 0 0 2px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 600;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.check .box {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid #3a3f47;
+  border-radius: 7px;
+}
+.check input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.check input:checked + .box::after {
+  content: "";
+  display: block;
+  width: 6px;
+  height: 12px;
+  margin: 2px auto 0;
+  border: solid #12100e;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+.check input:focus-visible + .box { outline: 2px solid var(--focus); outline-offset: 2px; }
+.check .label { font-size: 16px; display: flex; align-items: baseline; gap: 8px; }
+.check input:checked ~ .label { color: var(--dim); }
+.check .time { font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.check.task .label { display: block; }
+.check.task input:checked ~ .label { text-decoration: line-through; }
+
+/* Tomorrow's three */
+.task-row { display: flex; align-items: center; gap: 10px; min-height: var(--tap); }
+.task-row .n {
+  flex: none;
+  width: 10px;
+  color: #4d525a;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.task-row input {
+  flex: 1;
+  min-height: 40px;
+  min-width: 0;
+  background: #0f1114;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  padding: 0 10px;
+}
+.task-row input::placeholder { color: #4d525a; }
+.tally { margin: 0 0 2px; color: var(--dim); font-size: 13px; }
+.empty { margin: 4px 0 8px; color: var(--dim); font-size: 15px; }
+
+/* 6. Week ring */
+.ring-row { display: flex; align-items: center; gap: 14px; }
+.ring { width: 52px; height: 52px; flex: none; }
+.ring-track, .ring-fill { fill: none; stroke-width: 6; }
+.ring-track { stroke: var(--line); }
+.ring-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray 300ms ease;
+}
+.ring-text { margin: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.ring-text strong { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ring-text span { font-size: 14px; color: var(--dim); }
+
+/* Decision gate */
+.gate {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px max(18px, env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom));
+}
+.gate h2 { margin: 0; font-size: 26px; font-weight: 600; }
+.gate p { margin: 0; color: var(--dim); font-size: 16px; line-height: 1.5; }
+.gate .choices { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.gate button {
+  min-height: 52px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #12100e;
+  border: 0;
+}
+.gate button.alt {
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--line);
+  font-weight: 400;
+}
+
+/* Export lives below the fold on purpose: never part of the daily loop. */
+.footer { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.export {
+  width: 100%;
+  min-height: var(--tap);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--dim);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.footnote { margin: 8px 0 0; color: #5c6069; font-size: 13px; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<main class="screen">
+
+  <!-- 1. Header -->
+  <header class="head">
+    <div class="head-week">
+      <button type="button" class="nudge" id="prev" aria-label="Previous week">&lsaquo;</button>
+      <h1 id="week-label">Week 1 <span class="of">/ 19</span></h1>
+      <button type="button" class="nudge" id="next" aria-label="Next week">&rsaquo;</button>
+      <button type="button" class="reset" id="reset-week" hidden>manual · reset</button>
+    </div>
+    <p class="date" id="date-label"></p>
+  </header>
+
+  <p class="closed" id="closed-line" hidden></p>
+
+  <!-- 2. Primary card -->
+  <section class="card" aria-labelledby="session-name">
+    <p class="eyebrow" id="card-eyebrow">Today</p>
+    <h2 id="session-name">Rest</h2>
+    <p class="distance" id="session-distance" hidden><span id="distance-value">0</span> <span class="unit">mi</span></p>
+    <p class="guidance" id="session-guidance"></p>
+
+    <!-- 3. Log fields -->
+    <div class="log" id="log-fields" hidden>
+      <label class="field">
+        <span>Miles</span>
+        <input type="text" inputmode="decimal" enterkeyhint="done" id="in-miles" aria-label="Miles">
+      </label>
+      <label class="field">
+        <span>Time</span>
+        <input type="text" inputmode="numeric" enterkeyhint="done" id="in-time" placeholder="--:--" aria-label="Time">
+      </label>
+      <label class="field">
+        <span>Effort</span>
+        <input type="text" inputmode="numeric" enterkeyhint="done" id="in-effort" placeholder="1-10" aria-label="Effort 1 to 10">
+      </label>
+    </div>
+
+    <button type="button" class="done" id="mark-done" hidden>Mark done</button>
+    <button type="button" class="undo" id="undo" hidden>Undo</button>
+  </section>
+
+  <!-- 4. Rest of the week -->
+  <p class="rest" id="rest-line"></p>
+
+  <button type="button" class="strength" id="strength" hidden>
+    <span class="plus" aria-hidden="true">+</span>
+    <span>Strength <span class="sub">Injury insurance, not training.</span></span>
+    <span class="count" id="strength-count">0 / 2</span>
+  </button>
+
+  <!-- Today's three (morning) -->
+  <section class="list" id="today-list" aria-labelledby="today-list-h" hidden>
+    <h3 id="today-list-h">Today's three</h3>
+    <div id="today-items"></div>
+    <p class="empty" id="today-empty" hidden>Nothing written down. You set tomorrow's tonight.</p>
+  </section>
+
+  <!-- Tomorrow's three (evening) -->
+  <section class="list" id="tomorrow-list" aria-labelledby="tomorrow-h" hidden>
+    <h3 id="tomorrow-h">Tomorrow</h3>
+    <p class="tally" id="today-tally" hidden></p>
+    <div class="task-row">
+      <span class="n" aria-hidden="true">1</span>
+      <input type="text" id="task-0" enterkeyhint="next" placeholder="From the journal" aria-label="Tomorrow, first thing">
+    </div>
+    <div class="task-row">
+      <span class="n" aria-hidden="true">2</span>
+      <input type="text" id="task-1" enterkeyhint="next" placeholder="" aria-label="Tomorrow, second thing">
+    </div>
+    <div class="task-row">
+      <span class="n" aria-hidden="true">3</span>
+      <input type="text" id="task-2" enterkeyhint="done" placeholder="" aria-label="Tomorrow, third thing">
+    </div>
+  </section>
+
+  <!-- 5. Tonight -->
+  <section class="tonight" id="tonight" aria-labelledby="tonight-h">
+    <h3 id="tonight-h">Tonight</h3>
+    <label class="check">
+      <input type="checkbox" id="hab-shutdown">
+      <span class="box" aria-hidden="true"></span>
+      <span class="label">Phone out of the bedroom<span class="time" id="t-shutdown">9:00 PM</span></span>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="hab-diary">
+      <span class="box" aria-hidden="true"></span>
+      <span class="label">1% Diary entry<span class="time" id="t-diary">9:05 PM</span></span>
+    </label>
+  </section>
+
+  <!-- 6. Week ring -->
+  <section class="ring-row" id="ring-row">
+    <svg class="ring" viewBox="0 0 64 64" aria-hidden="true">
+      <circle class="ring-track" cx="32" cy="32" r="27"></circle>
+      <circle class="ring-fill" id="ring-fill" cx="32" cy="32" r="27"
+              stroke-dasharray="0 169.6" transform="rotate(-90 32 32)"></circle>
+    </svg>
+    <p class="ring-text"><strong id="ring-count">0 of 3</strong><span>sessions this week</span></p>
+  </section>
+
+  <!-- Export -->
+  <footer class="footer">
+    <button type="button" class="export" id="export">Export data</button>
+    <p class="footnote">Everything logged so far, as a file you keep.</p>
+  </footer>
+
+</main>
+
+<!-- Week 11 decision gate -->
+<div class="gate" id="gate" hidden>
+  <h2>Decision gate</h2>
+  <p>Injury-free and the long runs are holding? The full is on.</p>
+  <p>Carrying something that alters your stride? Switch to the half at the same race and
+     target a spring full. Switching here is a tactical call. Racing hurt is the failure.</p>
+  <div class="choices">
+    <button type="button" id="pick-full">Staying on the full</button>
+    <button type="button" class="alt" id="pick-half">Switching to the half</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- plan data (§5) ---------- */
+
+const PLAN = [
+  { week: 1,  long: 2,    easy: 1.5, mod: 2,   fri: 0,   tag: null,     note: "Run/walk is fine. Just finish each one." },
+  { week: 2,  long: 2.5,  easy: 2,   mod: 2,   fri: 0,   tag: null,     note: "Everything conversational. No pace goals." },
+  { week: 3,  long: 3,    easy: 2,   mod: 2.5, fri: 0,   tag: null,     note: "Longest run in six months. That counts." },
+  { week: 4,  long: 3.5,  easy: 2,   mod: 2.5, fri: 0,   tag: null,     note: "Legs adapting. Watch for niggles." },
+  { week: 5,  long: 2.5,  easy: 2,   mod: 2,   fri: 0,   tag: "deload", note: "Deload. Absorb the return." },
+  { week: 6,  long: 4,    easy: 2.5, mod: 3,   fri: 0,   tag: null,     note: "Continuous running should feel easier now." },
+  { week: 7,  long: 5,    easy: 2.5, mod: 3,   fri: 0,   tag: null,     note: "First five-miler." },
+  { week: 8,  long: 6,    easy: 3,   mod: 3.5, fri: 2,   tag: null,     note: "Optional Friday shakeout starts." },
+  { week: 9,  long: 4,    easy: 2.5, mod: 3,   fri: 0,   tag: "deload", note: "Deload." },
+  { week: 10, long: 7,    easy: 3,   mod: 3.5, fri: 2,   tag: null,     note: "Practice mid-run hydration." },
+  { week: 11, long: 8,    easy: 3,   mod: 4,   fri: 2,   tag: "gate",   note: "Decision gate: full or half. Answer honestly." },
+  { week: 12, long: 10,   easy: 3.5, mod: 4,   fri: 2.5, tag: null,     note: "Double digits. Gels on the long run." },
+  { week: 13, long: 7,    easy: 3,   mod: 3.5, fri: 0,   tag: "deload", note: "Deload." },
+  { week: 14, long: 12,   easy: 3.5, mod: 4.5, fri: 2.5, tag: null,     note: "Test the race-day breakfast." },
+  { week: 15, long: 14,   easy: 4,   mod: 5,   fri: 3,   tag: null,     note: "Past half-marathon distance." },
+  { week: 16, long: 16,   easy: 4,   mod: 5,   fri: 3,   tag: null,     note: "Dress rehearsal: shoes, fuel, pacing." },
+  { week: 17, long: 18,   easy: 3.5, mod: 4,   fri: 3,   tag: "peak",   note: "Peak. Longest run. Then trust the taper." },
+  { week: 18, long: 10,   easy: 3.5, mod: 4,   fri: 0,   tag: "taper",  note: "Taper. Volume drops. You will feel restless." },
+  { week: 19, long: 26.2, easy: 3,   mod: 2,   fri: 0,   tag: "race",   note: "Race week. Easy shakeouts only." }
+];
+
+const TOTAL_WEEKS = PLAN.length;
+const HALF_CAP = 13.1;
+const STORE_KEY = "the-build";
+const RING_C = 169.6; // 2 * PI * 27
+const MAX_TASKS = 3;
+const EVENING_HOUR = 18;
+
+/* ---------- state ---------- */
+
+const DEFAULTS = {
+  startDate: null,
+  weekShift: 0,
+  raceChoice: null,
+  completed: {},
+  logs: {},
+  habits: {},
+  tasks: {},
+  weekHistory: [],
+  lastClosed: 0
+};
+
+let state = load();
+
+function load() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+  } catch (e) {
+    saved = {};
+  }
+  const s = Object.assign({}, DEFAULTS, saved);
+  if (!s.startDate) s.startDate = firstStart();
+  return s;
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  } catch (e) {
+    /* storage full or blocked: the screen still works for this session */
+  }
+}
+
+/* Week 1 begins on a Sunday. Opening late in a week (Thu-Sat) starts the
+   upcoming Sunday rather than handing over a week that is already spent. */
+function firstStart() {
+  const now = new Date();
+  const dow = now.getDay();
+  const shift = dow >= 4 ? 7 - dow : -dow;
+  return ymd(addDays(now, shift));
+}
+
+/* ---------- dates ---------- */
+
+function ymd(d) {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return d.getFullYear() + "-" + m + "-" + day;
+}
+
+function fromYmd(s) {
+  const p = s.split("-");
+  return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+}
+
+function addDays(d, n) {
+  const c = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  c.setDate(c.getDate() + n);
+  return c;
+}
+
+function daysBetween(a, b) {
+  return Math.round((b - a) / 86400000);
+}
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+                "August", "September", "October", "November", "December"];
+
+function today() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+/* The screen splits at 6 PM: mornings are for running, evenings are for
+   the two habits and writing down tomorrow. */
+function isEvening() {
+  return new Date().getHours() >= EVENING_HOUR;
+}
+
+function clockTime(d) {
+  let h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return h + ":" + m + " " + ampm;
+}
+
+/* ---------- week resolution (§3) ---------- */
+
+function autoWeek() {
+  const elapsed = daysBetween(fromYmd(state.startDate), today());
+  return Math.floor(elapsed / 7) + 1;
+}
+
+function currentWeek() {
+  return clamp(autoWeek() + state.weekShift, 1, TOTAL_WEEKS);
+}
+
+function clamp(n, lo, hi) {
+  return Math.min(hi, Math.max(lo, n));
+}
+
+function started() {
+  return daysBetween(fromYmd(state.startDate), today()) >= 0;
+}
+
+/* Long-run progression is capped at 13.1 and scaled proportionally if the
+   half is chosen at the week 11 gate. Weekday runs are unchanged. */
+function longFor(week) {
+  const base = PLAN[week - 1].long;
+  if (state.raceChoice !== "half" || week < 12) return base;
+  if (week === TOTAL_WEEKS) return HALF_CAP;
+  const peak = PLAN[16].long; // week 17
+  return Math.min(HALF_CAP, Math.round(base * (HALF_CAP / peak) * 2) / 2);
+}
+
+/* ---------- sessions ---------- */
+
+function sessions(week) {
+  const p = PLAN[week - 1];
+  const list = [
+    { id: "w" + week + "-easy", name: "Easy run",     dist: p.easy,       required: true },
+    { id: "w" + week + "-mod",  name: "Moderate run", dist: p.mod,        required: true },
+    { id: "w" + week + "-long", name: week === TOTAL_WEEKS ? "Race day" : "Long run",
+      dist: longFor(week), required: true, day: 6 }
+  ];
+  if (p.fri > 0) {
+    list.push({ id: "w" + week + "-fri", name: "Shakeout", dist: p.fri, required: false, day: 5 });
+  }
+  return list;
+}
+
+function isDone(id) {
+  return Boolean(state.completed[id]);
+}
+
+function requiredRuns(week) {
+  return sessions(week).filter(function (s) { return s.required; });
+}
+
+function doneCount(week) {
+  return requiredRuns(week).filter(function (s) { return isDone(s.id); }).length;
+}
+
+function strengthIds(week) {
+  return ["w" + week + "-str-1", "w" + week + "-str-2"];
+}
+
+function strengthDone(week) {
+  return strengthIds(week).filter(isDone).length;
+}
+
+function ranToday(week) {
+  const stamp = ymd(today());
+  return sessions(week).find(function (s) { return state.completed[s.id] === stamp; });
+}
+
+/* Which session belongs on today's card. Returns a run session, or null for rest. */
+function todaysSession(week, dow) {
+  const all = sessions(week);
+  const byId = function (id) { return all.find(function (s) { return s.id === id; }); };
+  const open = function (id) { const s = byId(id); return s && !isDone(s.id) ? s : null; };
+
+  if (dow === 6) return open("w" + week + "-long");
+  if (dow === 5) return open("w" + week + "-fri");   // shakeout only; no other run before the long run
+  if (dow === 0) return null;                        // day after the long run is recovery
+  return open("w" + week + "-easy") || open("w" + week + "-mod");
+}
+
+function restCopy(week, dow) {
+  if (dow === 0) {
+    return week > 1 && isDone("w" + (week - 1) + "-long")
+      ? "Rest. Yesterday was the long run — nothing to do today."
+      : "Rest. Nothing to do today — that's the assignment.";
+  }
+  if (dow === 5) return "Rest. No run the day before the long run.";
+  const owed = requiredRuns(week).filter(function (s) { return !isDone(s.id); });
+  if (owed.length === 0) return "Week done. Nothing left to run.";
+  if (dow === 6) return "Rest. Whatever is unfinished expires tonight.";
+  return "Rest. Nothing owed until Saturday.";
+}
+
+/* ---------- tomorrow's three ----------
+   Three things carried over from the paper journal. Written the night before,
+   ticked off the next day. Unfinished ones do not carry themselves: they are
+   offered back when the next list is written, and kept only if retyped. */
+
+function tasksFor(key) {
+  return state.tasks[key] || [];
+}
+
+function todayKey() {
+  return ymd(today());
+}
+
+function tomorrowKey() {
+  return ymd(addDays(today(), 1));
+}
+
+/* First time tomorrow's list is opened, start it from whatever is unfinished today. */
+function seedTomorrow() {
+  const key = tomorrowKey();
+  if (key in state.tasks) return;
+  state.tasks[key] = tasksFor(todayKey())
+    .filter(function (t) { return !t.done; })
+    .map(function (t) { return { text: t.text, done: false }; })
+    .slice(0, MAX_TASKS);
+  save();
+}
+
+function saveTomorrow() {
+  const list = [];
+  for (let i = 0; i < MAX_TASKS; i++) {
+    const text = el("task-" + i).value.trim();
+    if (text) list.push({ text: text, done: false });
+  }
+  state.tasks[tomorrowKey()] = list;
+  save();
+}
+
+function toggleTask(index) {
+  const list = tasksFor(todayKey());
+  if (!list[index]) return;
+  list[index].done = !list[index].done;
+  save();
+}
+
+/* Old lists are not history; they expire like unfinished runs do. */
+function pruneTasks() {
+  const cutoff = ymd(addDays(today(), -1));
+  let changed = false;
+  Object.keys(state.tasks).forEach(function (key) {
+    if (key < cutoff) {
+      delete state.tasks[key];
+      changed = true;
+    }
+  });
+  if (changed) save();
+}
+
+/* ---------- week closing (§3) ---------- */
+
+function closeWeeks() {
+  const auto = clamp(autoWeek(), 1, TOTAL_WEEKS + 1);
+  let changed = false;
+  for (let w = state.lastClosed + 1; w < auto && w <= TOTAL_WEEKS; w++) {
+    state.weekHistory.push({ week: w, done: doneCount(w), planned: requiredRuns(w).length });
+    state.lastClosed = w;
+    changed = true;
+  }
+  if (changed) save();
+}
+
+/* ---------- rendering ---------- */
+
+const el = function (id) { return document.getElementById(id); };
+
+function render() {
+  const now = today();
+  const dow = now.getDay();
+  const week = currentWeek();
+  const plan = PLAN[week - 1];
+  const live = started() && week === clamp(autoWeek(), 1, TOTAL_WEEKS);
+  const evening = isEvening();
+
+  el("week-label").innerHTML = "Week " + week + ' <span class="of">/ ' + TOTAL_WEEKS + "</span>";
+  el("date-label").textContent = DAYS[dow] + ", " + MONTHS[now.getMonth()] + " " + now.getDate();
+  el("prev").disabled = week <= 1;
+  el("next").disabled = week >= TOTAL_WEEKS;
+  el("reset-week").hidden = state.weekShift === 0;
+
+  renderClosedLine(week, dow);
+
+  if (!started()) {
+    showRest("Week 1 starts Sunday. Nothing to do until then.", "Not yet");
+  } else {
+    const already = ranToday(week);
+    if (already && live) {
+      showLogged(already);
+    } else {
+      const s = todaysSession(week, dow);
+      if (s && live) showRun(s, plan, evening);
+      else if (s) showPreview(s, plan);
+      else showRest(restCopy(week, dow), "Today");
+    }
+  }
+
+  el("rest-line").hidden = evening;
+  el("tonight").hidden = !evening;
+
+  renderRest(week, dow);
+  renderStrength(week, evening);
+  renderTasks(evening);
+  renderHabits();
+  renderRing(week);
+  maybeGate(week);
+}
+
+function renderTasks(evening) {
+  el("today-list").hidden = evening;
+  el("tomorrow-list").hidden = !evening;
+
+  if (evening) {
+    seedTomorrow();
+    const tomorrow = tasksFor(tomorrowKey());
+    for (let i = 0; i < MAX_TASKS; i++) {
+      const input = el("task-" + i);
+      if (document.activeElement !== input) {
+        input.value = tomorrow[i] ? tomorrow[i].text : "";
+      }
+    }
+    const mine = tasksFor(todayKey());
+    const done = mine.filter(function (t) { return t.done; }).length;
+    el("today-tally").textContent = mine.length
+      ? "Today: " + done + " of " + mine.length + " done."
+      : "";
+    el("today-tally").hidden = mine.length === 0;
+    return;
+  }
+
+  const list = tasksFor(todayKey());
+  const box = el("today-items");
+  box.textContent = "";
+  el("today-empty").hidden = list.length > 0;
+
+  list.forEach(function (task, i) {
+    const row = document.createElement("label");
+    row.className = "check task";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = Boolean(task.done);
+    input.addEventListener("change", function () {
+      toggleTask(i);
+      render();
+    });
+
+    const box2 = document.createElement("span");
+    box2.className = "box";
+    box2.setAttribute("aria-hidden", "true");
+
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = task.text;
+
+    row.appendChild(input);
+    row.appendChild(box2);
+    row.appendChild(label);
+    box.appendChild(row);
+  });
+}
+
+function renderClosedLine(week, dow) {
+  const line = el("closed-line");
+  const last = state.weekHistory[state.weekHistory.length - 1];
+  if (last && last.week === week - 1 && dow <= 1 && state.weekShift === 0) {
+    line.textContent = "Week " + last.week + " closed — " + last.done + " of " + last.planned + " runs.";
+    line.hidden = false;
+  } else {
+    line.hidden = true;
+  }
+}
+
+function showRun(s, plan, evening) {
+  const name = s.name + (s.required ? "" : " (optional)");
+  document.querySelector(".card").classList.toggle("compact", Boolean(evening));
+  el("card-eyebrow").textContent = "Today";
+  el("session-name").textContent = evening ? name + " · " + s.dist + " mi" : name;
+  el("distance-value").textContent = s.dist;
+  el("session-distance").hidden = Boolean(evening);
+  el("session-guidance").textContent = plan.note;
+  el("session-guidance").hidden = Boolean(evening);
+  el("log-fields").hidden = false;
+  el("mark-done").hidden = false;
+  el("mark-done").dataset.id = s.id;
+  el("mark-done").dataset.dist = s.dist;
+  el("undo").hidden = true;
+  el("in-miles").placeholder = String(s.dist);
+}
+
+/* Looking at a week that is not the live one: show it, do not let it be logged. */
+function showPreview(s, plan) {
+  plainCard();
+  el("card-eyebrow").textContent = "That week";
+  el("session-name").textContent = s.name;
+  el("distance-value").textContent = s.dist;
+  el("session-distance").hidden = false;
+  el("session-guidance").textContent = plan.note;
+  el("log-fields").hidden = true;
+  el("mark-done").hidden = true;
+  el("undo").hidden = true;
+}
+
+/* Rest, done and preview cards are already short; they never need the night trim. */
+function plainCard() {
+  document.querySelector(".card").classList.remove("compact");
+  el("session-guidance").hidden = false;
+}
+
+function showLogged(s) {
+  plainCard();
+  const log = state.logs[s.id] || {};
+  const bits = [s.name];
+  if (log.miles) bits.push(log.miles + " mi");
+  if (log.time) bits.push(log.time);
+  if (log.effort) bits.push("effort " + log.effort);
+  el("card-eyebrow").textContent = "Today";
+  el("session-name").textContent = "Done for today";
+  el("session-distance").hidden = true;
+  el("session-guidance").textContent = bits.join(" · ") + ".";
+  el("log-fields").hidden = true;
+  el("mark-done").hidden = true;
+  el("undo").hidden = false;
+  el("undo").dataset.id = s.id;
+}
+
+function showRest(copy, eyebrow) {
+  plainCard();
+  el("card-eyebrow").textContent = eyebrow;
+  el("session-name").textContent = copy.split(".")[0];
+  el("session-distance").hidden = true;
+  el("session-guidance").textContent = copy.slice(copy.indexOf(".") + 1).trim();
+  el("log-fields").hidden = true;
+  el("mark-done").hidden = true;
+  el("undo").hidden = true;
+}
+
+function renderRest(week, dow) {
+  const shown = started() ? todaysSession(week, dow) : null;
+  const todayId = shown ? shown.id : (ranToday(week) || {}).id;
+  const owed = sessions(week).filter(function (s) {
+    return !isDone(s.id) && s.id !== todayId;
+  });
+  if (owed.length === 0) {
+    el("rest-line").textContent = "Nothing else owed this week.";
+    return;
+  }
+  const parts = owed.map(function (s) {
+    return s.name.toLowerCase() + " " + s.dist + " mi" + (s.required ? "" : " (optional)");
+  });
+  el("rest-line").textContent = "Also this week: " + parts.join(" · ") + ".";
+}
+
+function renderStrength(week, evening) {
+  const done = strengthDone(week);
+  el("strength-count").textContent = done + " / 2";
+  el("strength").hidden = done >= 2 || evening;
+  el("strength").dataset.week = week;
+}
+
+function renderHabits() {
+  const h = state.habits[ymd(today())] || {};
+  el("hab-shutdown").checked = Boolean(h.shutdown);
+  el("hab-diary").checked = Boolean(h.diary);
+  el("t-shutdown").textContent = h.shutdown || "9:00 PM";
+  el("t-diary").textContent = h.diary || "9:05 PM";
+}
+
+function renderRing(week) {
+  const done = doneCount(week);
+  const planned = requiredRuns(week).length;
+  const fill = planned ? (done / planned) * RING_C : 0;
+  el("ring-fill").setAttribute("stroke-dasharray", fill.toFixed(1) + " " + RING_C);
+  el("ring-count").textContent = done + " of " + planned;
+  el("ring-row").setAttribute("aria-label",
+    "Week " + week + " progress: " + done + " of " + planned + " sessions done");
+}
+
+function maybeGate(week) {
+  el("gate").hidden = !(week >= 11 && !state.raceChoice && started());
+}
+
+/* ---------- actions ---------- */
+
+el("mark-done").addEventListener("click", function () {
+  const id = this.dataset.id;
+  const miles = el("in-miles").value.trim();
+  const time = el("in-time").value.trim();
+  const effort = el("in-effort").value.trim();
+
+  state.completed[id] = ymd(today());
+  state.logs[id] = {
+    miles: Number(miles || this.dataset.dist),
+    time: time,
+    effort: effort ? clamp(Number(effort), 1, 10) : null
+  };
+  el("in-miles").value = "";
+  el("in-time").value = "";
+  el("in-effort").value = "";
+  save();
+  render();
+});
+
+el("undo").addEventListener("click", function () {
+  delete state.completed[this.dataset.id];
+  delete state.logs[this.dataset.id];
+  save();
+  render();
+});
+
+el("strength").addEventListener("click", function () {
+  const week = Number(this.dataset.week);
+  const next = strengthIds(week).find(function (id) { return !isDone(id); });
+  if (!next) return;
+  state.completed[next] = ymd(today());
+  save();
+  render();
+});
+
+for (let i = 0; i < MAX_TASKS; i++) {
+  el("task-" + i).addEventListener("input", saveTomorrow);
+}
+
+el("hab-shutdown").addEventListener("change", function () {
+  setHabit("shutdown", this.checked);
+});
+
+el("hab-diary").addEventListener("change", function () {
+  setHabit("diary", this.checked);
+});
+
+function setHabit(key, on) {
+  const stamp = ymd(today());
+  const day = state.habits[stamp] || (state.habits[stamp] = {});
+  if (on) day[key] = clockTime(new Date());
+  else delete day[key];
+  save();
+  render();
+}
+
+el("prev").addEventListener("click", function () { nudgeWeek(-1); });
+el("next").addEventListener("click", function () { nudgeWeek(1); });
+
+function nudgeWeek(n) {
+  const target = clamp(currentWeek() + n, 1, TOTAL_WEEKS);
+  state.weekShift = target - clamp(autoWeek(), 1, TOTAL_WEEKS);
+  save();
+  render();
+}
+
+el("reset-week").addEventListener("click", function () {
+  state.weekShift = 0;
+  save();
+  render();
+});
+
+/* On iPhone a plain download is unreliable inside a home screen app, so hand the
+   file to the share sheet (Files, Mail, AirDrop) and fall back to a download. */
+el("export").addEventListener("click", function () {
+  const name = "the-build-" + ymd(today()) + ".json";
+  const text = JSON.stringify(state, null, 2);
+  const button = this;
+
+  try {
+    const file = new File([text], name, { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "The Build" }).catch(function () {});
+      return;
+    }
+  } catch (e) {
+    /* older browser: fall through to the download */
+  }
+
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+
+  button.textContent = "Saved " + name;
+  setTimeout(function () { button.textContent = "Export data"; }, 4000);
+});
+
+el("pick-full").addEventListener("click", function () { setRace("full"); });
+el("pick-half").addEventListener("click", function () { setRace("half"); });
+
+function setRace(choice) {
+  state.raceChoice = choice;
+  save();
+  render();
+}
+
+/* Reopening a day later should not leave yesterday on the screen. */
+let renderedOn = ymd(today());
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState !== "visible") return;
+  const now = ymd(today());
+  if (now !== renderedOn) {
+    renderedOn = now;
+    closeWeeks();
+    pruneTasks();
+  }
+  render();
+});
+
+closeWeeks();
+pruneTasks();
+render();
+
+/* Only works once the app is served over https; harmless everywhere else. */
+if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  });
+}
+</script>
+
+</body>
+</html>
