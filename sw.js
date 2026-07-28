@@ -1,7 +1,7 @@
 /* Keeps a copy of the app on the phone so it opens with no signal.
    Bump VERSION whenever the app files change. */
 
-const VERSION = "the-build-v13";
+const VERSION = "the-build-v14";
 const PAGE = "./index.html";
 const ASSETS = ["./", PAGE, "./manifest.json", "./icon-180.png", "./icon-512.png"];
 const NETWORK_WAIT = 2500;

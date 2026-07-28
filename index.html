@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="13">
+<meta name="build" content="15">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -770,7 +770,7 @@ html, body {
       <button type="button" class="back" id="week-back">&lsaquo; Back</button>
       <h2 id="week-title">This week</h2>
     </div>
-    <p class="hint">Tick them off in any order. The long run stays on Saturday.</p>
+    <p class="hint">Suggested days are suggestions. Only the long run is fixed — tick the rest off in any order.</p>
     <div class="week-list" id="week-list"></div>
   </div>
 </div>
@@ -1035,9 +1035,10 @@ function longFor(week) {
 
 function sessions(week) {
   const p = PLAN[week - 1];
+  /* `day` is fixed, `hint` is only the plan's suggestion — the runs still float. */
   const list = [
-    { id: "w" + week + "-easy", name: "Easy run",     dist: p.easy,       required: true },
-    { id: "w" + week + "-mod",  name: "Moderate run", dist: p.mod,        required: true },
+    { id: "w" + week + "-easy", name: "Easy run",     dist: p.easy, required: true, hint: 2 },
+    { id: "w" + week + "-mod",  name: "Moderate run", dist: p.mod,  required: true, hint: 4 },
     { id: "w" + week + "-long", name: week === TOTAL_WEEKS ? "Race day" : "Long run",
       dist: longFor(week), required: true, day: 6 }
   ];
@@ -1649,12 +1650,15 @@ function drawWeekList() {
   box.textContent = "";
 
   sessions(week).forEach(function (s) {
-    const note = s.dist + " mi" + (s.day === 6 ? " · Saturday" : "") + (s.required ? "" : " · optional");
+    const when = s.day === 6 ? " · Saturday only"
+      : s.day === 5 ? " · Friday"
+      : s.hint ? " · suggested " + DAYS[s.hint] : "";
+    const note = s.dist + " mi" + when + (s.required ? "" : " · optional");
     box.appendChild(listRow(s.id, s.name, note, s.dist));
   });
 
   strengthIds(week).forEach(function (id, i) {
-    box.appendChild(listRow(id, "Strength " + (i + 1), "20 min · optional", null));
+    box.appendChild(listRow(id, "Strength " + (i + 1), "20 min · any day · optional", null));
   });
 }
 
@@ -1818,30 +1822,107 @@ el("d-next").addEventListener("click", function () { stepWeek(1); });
 
 const COUNTS = ["Nothing", "One", "Two", "Three", "Four", "Five", "Six"];
 
-/* One line a day, in the app's voice: flat, unsentimental, no cheerleading.
-   The three attributed ones are real quotes and stay attributed. */
+/* Public-domain translations only: Long (1862) for Aurelius, Higginson (1865)
+   and Long for Epictetus, Gummere (1917) for Seneca. Bundled rather than
+   fetched, so the line is there with no signal. One a day, in order. */
+const AURELIUS = "Marcus Aurelius, Meditations";
+const EPICTETUS = "Epictetus, Discourses";
+const ENCHIRIDION = "Epictetus, Enchiridion";
+const SENECA = "Seneca, Letters";
+
 const LINES = [
-  { t: "Consistency beats any single workout." },
-  { t: "The easy runs are not the optional ones." },
-  { t: "Slow is a pace, not a verdict." },
-  { t: "The long run is built on the weeks you didn't skip." },
-  { t: "Nobody remembers the pace of a training run." },
-  { t: "Rest is part of the plan, not a break from it." },
-  { t: "The body adapts to what you repeat." },
-  { t: "Finishing the run you didn't want to do is the whole skill." },
-  { t: "Miles at 5:15 AM count the same as miles at noon." },
-  { t: "Racing hurt is the failure. Switching is not." },
-  { t: "Injury insurance, not training. Never skip a run for it." },
-  { t: "Small and often beats big and rare." },
-  { t: "The plan works if you show up more often than not." },
-  { t: "A missed week is a missed week. Not a missed marathon." },
-  { t: "Two miles done is worth more than ten you planned." },
-  { t: "Effort six is where most of the work lives." },
-  { t: "Trust the taper." },
-  { t: "The gap between a run and no run is the only one that matters." },
-  { t: "No human is limited.", who: "Eliud Kipchoge" },
-  { t: "To give anything less than your best is to sacrifice the gift.", who: "Steve Prefontaine" },
-  { t: "If you want to run, run a mile. If you want to experience a different life, run a marathon.", who: "Emil Zátopek" }
+  { t: "In the morning when thou risest unwillingly, let this thought be present: I am rising to the work of a human being.", a: AURELIUS },
+  { t: "Confine thyself to the present.", a: AURELIUS },
+  { t: "Do every act of thy life as if it were the last.", a: AURELIUS },
+  { t: "No longer talk at all about the kind of man that a good man ought to be, but be such.", a: AURELIUS },
+  { t: "Be like the promontory against which the waves continually break, but which stands firm and tames the fury of the water around it.", a: AURELIUS },
+  { t: "Nothing happens to any man which he is not formed by nature to bear.", a: AURELIUS },
+  { t: "Take away thy opinion, and then there is taken away the complaint. Take away the complaint, and the hurt is gone.", a: AURELIUS },
+  { t: "Look within. Within is the fountain of good, and it will ever bubble up, if thou wilt ever dig.", a: AURELIUS },
+  { t: "Adapt thyself to the things with which thy lot has been cast.", a: AURELIUS },
+  { t: "How much trouble he avoids who does not look to see what his neighbour says or does.", a: AURELIUS },
+  { t: "Waste not the remainder of thy life in thoughts about others.", a: AURELIUS },
+  { t: "Give thyself time to learn something new and good, and cease to be whirled around.", a: AURELIUS },
+  { t: "Consider that everything is opinion, and opinion is in thy power.", a: AURELIUS },
+  { t: "The best way of avenging thyself is not to become like the wrong doer.", a: AURELIUS },
+  { t: "Every man's life lies within the present.", a: AURELIUS },
+  { t: "Loss is nothing else than change, and change is nature's delight.", a: AURELIUS },
+  { t: "Think not so much of what thou hast not as of what thou hast.", a: AURELIUS },
+  { t: "Let not future things disturb thee, for thou wilt come to them, if it shall be necessary, with the same reason which now thou usest for present things.", a: AURELIUS },
+  { t: "Begin the morning by saying to thyself: I shall meet with the busybody, the ungrateful, the arrogant.", a: AURELIUS },
+  { t: "That which is not good for the swarm, neither is it good for the bee.", a: AURELIUS },
+  { t: "Perfection of character is this: to live each day as if it were the last.", a: AURELIUS },
+  { t: "Nowhere can a man find a quieter or more untroubled retreat than in his own soul.", a: AURELIUS },
+  { t: "The universe is transformation: our life is what our thoughts make it.", a: AURELIUS },
+  { t: "If it is not right, do not do it; if it is not true, do not say it.", a: AURELIUS },
+  { t: "Do not act as if thou wert going to live ten thousand years.", a: AURELIUS },
+  { t: "Because a thing seems difficult for thee, do not think it impossible.", a: AURELIUS },
+  { t: "The soul becomes dyed with the colour of its thoughts.", a: AURELIUS },
+  { t: "Time is a sort of river of passing events, and strong is its current.", a: AURELIUS },
+  { t: "Whatever happens at all happens as it should.", a: AURELIUS },
+  { t: "Very little is needed to make a happy life; it is all within thyself, in thy way of thinking.", a: AURELIUS },
+  { t: "A man's worth is no greater than the worth of his ambitions.", a: AURELIUS },
+  { t: "Never esteem anything as of advantage to thee that shall make thee break thy word or lose thy self-respect.", a: AURELIUS },
+  { t: "Reject thy sense of injury, and the injury itself disappears.", a: AURELIUS },
+  { t: "Let thy every deed and word and thought be those of one who might depart from life this moment.", a: AURELIUS },
+  { t: "Nothing has such power to broaden the mind as the ability to investigate systematically all that comes under thy observation in life.", a: AURELIUS },
+  { t: "Consider how much more thou often sufferest from thy anger and grief than from those very things for which thou art angry and grieved.", a: AURELIUS },
+  { t: "Men seek retreats for themselves, houses in the country, seashores and mountains. But it is in thy power to retire into thyself.", a: AURELIUS },
+  { t: "Be not disgusted, nor discouraged, nor dissatisfied, if thou dost not succeed in doing everything according to right principles; but when thou hast failed, return back again.", a: AURELIUS },
+  { t: "Thou canst live well even in a palace.", a: AURELIUS },
+  { t: "Let it be thy business to be plain and good.", a: AURELIUS },
+
+  { t: "Men are disturbed not by things, but by the views which they take of things.", a: ENCHIRIDION },
+  { t: "Seek not that the things which happen should happen as you wish; but wish the things which happen to be as they are.", a: ENCHIRIDION },
+  { t: "Sickness is an impediment to the body, but not to the will.", a: ENCHIRIDION },
+  { t: "It is not he who gives abuse that affronts, but the view that we take of it as insulting.", a: ENCHIRIDION },
+  { t: "Make the best use of what is in your power, and take the rest as it happens.", a: ENCHIRIDION },
+  { t: "If you wish to improve, be content to be thought foolish and stupid.", a: ENCHIRIDION },
+  { t: "Do not say of anything, I have lost it, but say, I have restored it.", a: ENCHIRIDION },
+  { t: "Remember that you are an actor in a drama of such sort as the author chooses.", a: ENCHIRIDION },
+  { t: "Demand not that events should happen as you wish; but wish them to happen as they do happen, and you will go on well.", a: ENCHIRIDION },
+  { t: "It is the act of an ill-instructed man to blame others for his own bad condition.", a: ENCHIRIDION },
+  { t: "In every affair consider what precedes and what follows, and then undertake it.", a: ENCHIRIDION },
+  { t: "No great thing is created suddenly, any more than a bunch of grapes or a fig.", a: EPICTETUS },
+  { t: "First say to yourself what you would be; and then do what you have to do.", a: EPICTETUS },
+  { t: "It is impossible for a man to learn what he thinks he already knows.", a: EPICTETUS },
+  { t: "Practise yourself, for heaven's sake, in little things; and thence proceed to greater.", a: EPICTETUS },
+  { t: "Difficulties are things that show what men are.", a: EPICTETUS },
+  { t: "If you wish to be a writer, write.", a: EPICTETUS },
+  { t: "He is a wise man who does not grieve for the things which he has not, but rejoices for those which he has.", a: EPICTETUS },
+  { t: "Wealth consists not in having great possessions, but in having few wants.", a: EPICTETUS },
+  { t: "Nothing great is produced suddenly. Let it first blossom, then bear fruit, then ripen.", a: EPICTETUS },
+  { t: "Do not be carried away by appearances. Say to every harsh appearance: you are an appearance, and not at all what you appear to be.", a: EPICTETUS },
+  { t: "You may fetter my leg, but my will not even Zeus himself can overpower.", a: EPICTETUS },
+  { t: "What is the fruit of these doctrines? Tranquillity, fearlessness, freedom.", a: EPICTETUS },
+  { t: "Whoever chafes at the conditions dealt by fate is unskilled in the art of life.", a: EPICTETUS },
+  { t: "Take care not to be found doing what you would blame in another.", a: EPICTETUS },
+
+  { t: "We suffer more often in imagination than in reality.", a: SENECA },
+  { t: "It is not that we have a short time to live, but that we waste a great deal of it.", a: SENECA },
+  { t: "Begin at once to live, and count each separate day as a separate life.", a: SENECA },
+  { t: "As long as you live, keep learning how to live.", a: SENECA },
+  { t: "Difficulties strengthen the mind, as labour does the body.", a: SENECA },
+  { t: "It is a rough road that leads to the heights of greatness.", a: SENECA },
+  { t: "While we are postponing, life speeds by.", a: SENECA },
+  { t: "The greatest obstacle to living is expectancy, which hangs upon tomorrow and loses today.", a: SENECA },
+  { t: "Hold fast to time. Some moments are snatched from us, some are stolen, some vanish.", a: SENECA },
+  { t: "No man is crushed by misfortune unless he has first been deceived by prosperity.", a: SENECA },
+  { t: "Nothing is burdensome if taken lightly.", a: SENECA },
+  { t: "He who is brave is free.", a: SENECA },
+  { t: "It is not the man who has too little, but the man who craves more, that is poor.", a: SENECA },
+  { t: "Associate with those who will make a better man of you.", a: SENECA },
+  { t: "Nothing, to my way of thinking, is a better proof of a well ordered mind than a man's ability to stop just where he is and pass some time in his own company.", a: SENECA },
+  { t: "Cease to hope, and you will cease to fear.", a: SENECA },
+  { t: "Every night before going to sleep, we must ask ourselves: what weakness did I overcome today?", a: SENECA },
+  { t: "You act like mortals in all that you fear, and like immortals in all that you desire.", a: SENECA },
+  { t: "The bravest sight in the world is to see a great man struggling against adversity.", a: SENECA },
+  { t: "A great fortune is a great slavery.", a: SENECA },
+  { t: "It is quality rather than quantity that matters.", a: SENECA },
+  { t: "The mind that is anxious about the future is miserable.", a: SENECA },
+  { t: "Not for nothing has nature given us two ears and one mouth.", a: SENECA },
+  { t: "Wherever there is a human being, there is an opportunity for a kindness.", a: SENECA },
+  { t: "He who has learned to die has unlearned slavery.", a: SENECA }
 ];
 
 /* Fixed for the whole day rather than shuffling on every open. */
@@ -1974,12 +2055,10 @@ function openSummary() {
   const line = dailyLine();
   const quote = el("summary-quote");
   quote.textContent = line.t;
-  if (line.who) {
-    const who = document.createElement("span");
-    who.className = "who";
-    who.textContent = line.who;
-    quote.appendChild(who);
-  }
+  const who = document.createElement("span");
+  who.className = "who";
+  who.textContent = line.a;
+  quote.appendChild(who);
 
   openSheet("summary-sheet", el("open-summary"));
 }
