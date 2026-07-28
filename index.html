@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="12">
+<meta name="build" content="13">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -670,7 +670,7 @@ html, body {
       </label>
       <label class="field">
         <span>Time</span>
-        <input type="text" inputmode="numeric" enterkeyhint="done" id="in-time" placeholder="--:--" aria-label="Time">
+        <input type="text" inputmode="numeric" enterkeyhint="done" id="in-time" placeholder="mm:ss" aria-label="Time">
       </label>
       <label class="field">
         <span>Effort</span>
@@ -864,7 +864,7 @@ const HALF_CAP = 13.1;
 const STORE_KEY = "the-build";
 const RING_C = 169.6; // 2 * PI * 27
 const MAX_TASKS = 3;
-const EVENING_HOUR = 18;
+const EVENING_AT = 20 * 60 + 30;   // 8:30 PM
 
 /* ---------- state ---------- */
 
@@ -944,10 +944,45 @@ function today() {
   return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 }
 
-/* The screen splits at 6 PM: mornings are for running, evenings are for
-   the two habits and writing down tomorrow. */
+/* The screen splits at 8:30 PM: mornings are for running, evenings are for
+   the two habits and writing down tomorrow. Late enough that an evening
+   session still has somewhere to be logged. */
 function isEvening() {
-  return new Date().getHours() >= EVENING_HOUR;
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= EVENING_AT;
+}
+
+/* The iPhone number pad has no colon, so 1623 becomes 16:23 when you leave
+   the box. Anything already punctuated is left alone. */
+function tidyTime(raw) {
+  const text = String(raw || "").trim();
+  if (!text || text.indexOf(":") !== -1) return text;
+
+  const digits = text.replace(/\D/g, "");
+  if (digits.length < 3) return digits;
+
+  const seconds = digits.slice(-2);
+  const rest = digits.slice(0, -2);
+  return rest.length > 2
+    ? rest.slice(0, -2) + ":" + rest.slice(-2) + ":" + seconds
+    : rest + ":" + seconds;
+}
+
+function timeToSeconds(time) {
+  const parts = String(time || "").split(":").map(Number);
+  if (!parts.length || parts.some(isNaN)) return 0;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return parts[0] * 60;
+}
+
+/* Pace is arithmetic on what you already typed — no new input, no targets. */
+function pace(miles, time) {
+  const seconds = timeToSeconds(time);
+  if (!seconds || !miles) return null;
+  const perMile = seconds / miles;
+  return Math.floor(perMile / 60) + ":" +
+    String(Math.round(perMile % 60)).padStart(2, "0") + "/mi";
 }
 
 function clockTime(d) {
@@ -1309,6 +1344,8 @@ function showLogged(s) {
   const bits = [s.name];
   bits.push((log.miles || s.dist) + " mi");
   if (log.time) bits.push(log.time);
+  const speed = pace(log.miles, log.time);
+  if (speed) bits.push(speed);
   if (log.effort) bits.push("effort " + log.effort);
 
   el("session-name").textContent = editing ? s.name : "Done for today";
@@ -1427,7 +1464,7 @@ function maybeGate(week) {
 el("mark-done").addEventListener("click", function () {
   const id = this.dataset.id;
   const miles = el("in-miles").value.trim();
-  const time = el("in-time").value.trim();
+  const time = tidyTime(el("in-time").value);
   const effort = el("in-effort").value.trim();
 
   /* Editing keeps the day it was originally logged. */
@@ -1443,6 +1480,10 @@ el("mark-done").addEventListener("click", function () {
   el("in-effort").value = "";
   save();
   render();
+});
+
+el("in-time").addEventListener("blur", function () {
+  this.value = tidyTime(this.value);
 });
 
 el("edit").addEventListener("click", function () {
@@ -1777,6 +1818,38 @@ el("d-next").addEventListener("click", function () { stepWeek(1); });
 
 const COUNTS = ["Nothing", "One", "Two", "Three", "Four", "Five", "Six"];
 
+/* One line a day, in the app's voice: flat, unsentimental, no cheerleading.
+   The three attributed ones are real quotes and stay attributed. */
+const LINES = [
+  { t: "Consistency beats any single workout." },
+  { t: "The easy runs are not the optional ones." },
+  { t: "Slow is a pace, not a verdict." },
+  { t: "The long run is built on the weeks you didn't skip." },
+  { t: "Nobody remembers the pace of a training run." },
+  { t: "Rest is part of the plan, not a break from it." },
+  { t: "The body adapts to what you repeat." },
+  { t: "Finishing the run you didn't want to do is the whole skill." },
+  { t: "Miles at 5:15 AM count the same as miles at noon." },
+  { t: "Racing hurt is the failure. Switching is not." },
+  { t: "Injury insurance, not training. Never skip a run for it." },
+  { t: "Small and often beats big and rare." },
+  { t: "The plan works if you show up more often than not." },
+  { t: "A missed week is a missed week. Not a missed marathon." },
+  { t: "Two miles done is worth more than ten you planned." },
+  { t: "Effort six is where most of the work lives." },
+  { t: "Trust the taper." },
+  { t: "The gap between a run and no run is the only one that matters." },
+  { t: "No human is limited.", who: "Eliud Kipchoge" },
+  { t: "To give anything less than your best is to sacrifice the gift.", who: "Steve Prefontaine" },
+  { t: "If you want to run, run a mile. If you want to experience a different life, run a marathon.", who: "Emil Zátopek" }
+];
+
+/* Fixed for the whole day rather than shuffling on every open. */
+function dailyLine() {
+  const n = Math.abs(daysBetween(fromYmd(state.startDate), today()));
+  return LINES[n % LINES.length];
+}
+
 function summaryLines() {
   const now = today();
   const dow = now.getDay();
@@ -1796,6 +1869,8 @@ function summaryLines() {
     const bits = [ran.name];
     bits.push((log.miles || ran.dist) + " miles");
     if (log.time) bits.push(log.time);
+    const speed = pace(log.miles, log.time);
+    if (speed) bits.push(speed);
     if (log.effort) bits.push("effort " + log.effort);
     lines.push(bits.join(", ") + ".");
   } else if (todaysSession(week, dow)) {
@@ -1826,6 +1901,65 @@ function summaryLines() {
   return lines;
 }
 
+/* What actually happened this week, a day per line. The facts you would
+   otherwise be reconstructing from memory while writing the diary. */
+function drawWeekToDate() {
+  const week = currentWeek();
+  const live = started() && week === clamp(autoWeek(), 1, TOTAL_WEEKS);
+  const start = addDays(fromYmd(state.startDate), (week - 1) * 7);
+  const lastDay = live ? today().getDay() : 6;
+  const box = el("summary-week");
+
+  box.textContent = "";
+  if (!started()) return;
+
+  const head = document.createElement("h3");
+  head.textContent = "This week";
+  box.appendChild(head);
+
+  for (let i = 0; i <= lastDay; i++) {
+    const date = addDays(start, i);
+    const key = ymd(date);
+    const bits = [];
+
+    sessions(week).forEach(function (s) {
+      if (state.completed[s.id] !== key) return;
+      const log = state.logs[s.id] || {};
+      const speed = pace(log.miles, log.time);
+      bits.push(s.name.toLowerCase() + ", " + (log.miles || s.dist) + " mi" +
+        (speed ? ", " + speed : ""));
+    });
+
+    strengthIds(week).forEach(function (id) {
+      if (state.completed[id] === key) bits.push("strength");
+    });
+
+    const extra = state.extras[key];
+    if (extra) {
+      bits.push(extra.what.toLowerCase() + (extra.miles ? ", " + extra.miles + " mi" : ""));
+    }
+
+    const row = document.createElement("div");
+    row.className = "row" + (live && i === lastDay ? " today" : "");
+
+    const day = document.createElement("span");
+    day.className = "d";
+    day.textContent = DAYS[date.getDay()].slice(0, 3);
+
+    const what = document.createElement("span");
+    if (bits.length) {
+      what.textContent = bits.join(" · ");
+    } else {
+      what.className = "none";
+      what.textContent = (live && i === lastDay) ? "nothing yet" : "rest";
+    }
+
+    row.appendChild(day);
+    row.appendChild(what);
+    box.appendChild(row);
+  }
+}
+
 function openSummary() {
   const body = el("summary-body");
   body.textContent = "";
@@ -1834,6 +1968,19 @@ function openSummary() {
     p.textContent = line;
     body.appendChild(p);
   });
+
+  drawWeekToDate();
+
+  const line = dailyLine();
+  const quote = el("summary-quote");
+  quote.textContent = line.t;
+  if (line.who) {
+    const who = document.createElement("span");
+    who.className = "who";
+    who.textContent = line.who;
+    quote.appendChild(who);
+  }
+
   openSheet("summary-sheet", el("open-summary"));
 }
 
