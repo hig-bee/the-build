@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="15">
+<meta name="build" content="16">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -129,6 +129,18 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .guidance { margin: 8px 0 0; color: var(--dim); font-size: 15px; }
+.anyway {
+  margin-top: 10px;
+  min-height: var(--tap);
+  padding: 0 10px;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 8px;
+}
 [hidden] { display: none !important; }
 
 /* 3. Log fields */
@@ -661,6 +673,7 @@ html, body {
     <p class="eyebrow" id="card-eyebrow" hidden></p>
     <h2 id="session-name">Rest</h2>
     <p class="guidance" id="session-guidance"></p>
+    <button type="button" class="anyway" id="anyway" hidden></button>
 
     <!-- 3. Log fields -->
     <div class="log" id="log-fields" hidden>
@@ -1085,6 +1098,39 @@ function todaysSession(week, dow) {
   return open("w" + week + "-easy") || open("w" + week + "-mod");
 }
 
+/* Overrides the spacing suggestion for today only. Deliberately not saved:
+   tomorrow starts from the plan again. */
+let runAnyway = false;
+
+function ranYesterday(week) {
+  const key = ymd(addDays(today(), -1));
+  return sessions(week).some(function (s) { return state.completed[s.id] === key; });
+}
+
+/* Ran yesterday and the week still has slack? Suggest a day off rather than
+   stacking runs — but keep the run one tap away. Once the days left match the
+   runs left, the suggestion stops and the run is offered outright. */
+function shouldSpace(week, dow) {
+  if (runAnyway || dow < 1 || dow > 4) return false;
+  if (!ranYesterday(week)) return false;
+
+  const floatingLeft = ["-easy", "-mod"].filter(function (suffix) {
+    return !isDone("w" + week + suffix);
+  }).length;
+  return floatingLeft < (4 - dow + 1);   // Monday to Thursday are the floating days
+}
+
+function spacedCopy(week, dow) {
+  const runsLeft = requiredRuns(week).filter(function (s) { return !isDone(s.id); }).length;
+  const daysLeft = 6 - dow;
+  const word = function (n) { return (COUNTS[n] || n).toString(); };
+
+  return "Rest. You ran yesterday. " +
+    word(runsLeft) + (runsLeft === 1 ? " run" : " runs") + " left, " +
+    word(daysLeft).toLowerCase() + (daysLeft === 1 ? " day" : " days") +
+    " — no need to stack them.";
+}
+
 function restCopy(week, dow) {
   if (dow === 0) {
     return week > 1 && isDone("w" + (week - 1) + "-long")
@@ -1204,9 +1250,12 @@ function render() {
       showLogged(already);
     } else {
       const s = todaysSession(week, dow);
-      if (s && live) showRun(s, plan, evening);
+      const spaced = s && live && s.required && shouldSpace(week, dow);
+
+      if (spaced) showRest(spacedCopy(week, dow), { label: "Run anyway ›", mode: "run" });
+      else if (s && live) showRun(s, plan, evening);
       else if (s) showPreview(s, plan);
-      else showRest(restCopy(week, dow));
+      else showRest(restCopy(week, dow), logAnywayOffer(week));
     }
   }
 
@@ -1333,6 +1382,7 @@ function showPreview(s, plan) {
 function plainCard() {
   el("card-eyebrow").hidden = true;
   el("session-guidance").hidden = false;
+  el("anyway").hidden = true;
 }
 
 /* Two ways in: Mark done on the card, or a tick in the week checklist. Only the
@@ -1369,10 +1419,21 @@ function showLogged(s) {
   }
 }
 
-function showRest(copy) {
+/* A rest day you ran on anyway still needs somewhere to go. */
+function logAnywayOffer(week) {
+  const owed = sessions(week).some(function (s) { return !isDone(s.id); });
+  return owed ? { label: "Ran anyway? Log it ›", mode: "log" } : null;
+}
+
+function showRest(copy, offer) {
   plainCard();
   el("session-name").textContent = copy.split(".")[0];
   el("session-guidance").textContent = copy.slice(copy.indexOf(".") + 1).trim();
+  el("anyway").hidden = !offer;
+  if (offer) {
+    el("anyway").textContent = offer.label;
+    el("anyway").dataset.mode = offer.mode;
+  }
   el("log-fields").hidden = true;
   el("mark-done").hidden = true;
   el("done-row").hidden = true;
@@ -1481,6 +1542,16 @@ el("mark-done").addEventListener("click", function () {
   el("in-effort").value = "";
   save();
   render();
+});
+
+el("anyway").addEventListener("click", function () {
+  if (this.dataset.mode === "run") {
+    runAnyway = true;
+    render();
+    return;
+  }
+  drawWeekList();
+  openSheet("week-sheet", el("rest-line"));
 });
 
 el("in-time").addEventListener("blur", function () {
@@ -2112,6 +2183,7 @@ document.addEventListener("visibilitychange", function () {
   const now = ymd(today());
   if (now !== renderedOn) {
     renderedOn = now;
+    runAnyway = false;
     closeWeeks();
     pruneTasks();
   }
