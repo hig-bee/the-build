@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="16">
+<meta name="build" content="17">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>The Build</title>
@@ -878,6 +878,7 @@ const STORE_KEY = "the-build";
 const RING_C = 169.6; // 2 * PI * 27
 const MAX_TASKS = 3;
 const EVENING_AT = 20 * 60 + 30;   // 8:30 PM
+const LATE_END = 3 * 60;           // 3:00 AM — the evening runs through midnight
 
 /* ---------- state ---------- */
 
@@ -957,12 +958,23 @@ function today() {
   return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 }
 
-/* The screen splits at 8:30 PM: mornings are for running, evenings are for
-   the two habits and writing down tomorrow. Late enough that an evening
-   session still has somewhere to be logged. */
-function isEvening() {
+/* The screen splits at 8:30 PM and stays split until 3 AM: mornings are for
+   running, evenings are for the two habits and writing down tomorrow. Late
+   enough that an evening session still has somewhere to be logged, and it
+   survives midnight for the nights that run long. */
+function minutesNow() {
   const now = new Date();
-  return now.getHours() * 60 + now.getMinutes() >= EVENING_AT;
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function isEvening() {
+  const mins = minutesNow();
+  return mins >= EVENING_AT || mins < LATE_END;
+}
+
+/* Past midnight, "tomorrow" is the day that has already started. */
+function lateNight() {
+  return minutesNow() < LATE_END;
 }
 
 /* The iPhone number pad has no colon, so 1623 becomes 16:23 when you leave
@@ -1157,15 +1169,22 @@ function todayKey() {
   return ymd(today());
 }
 
+/* The day the Tomorrow box writes to, and the day it draws leftovers from.
+   Before midnight those are tomorrow and today; after midnight they shift back
+   by one, so a list written at 12:30 AM lands on the day you are waking into. */
 function tomorrowKey() {
-  return ymd(addDays(today(), 1));
+  return ymd(addDays(today(), lateNight() ? 0 : 1));
+}
+
+function priorKey() {
+  return ymd(addDays(today(), lateNight() ? -1 : 0));
 }
 
 /* First time tomorrow's list is opened, start it from whatever is unfinished today. */
 function seedTomorrow() {
   const key = tomorrowKey();
   if (key in state.tasks) return;
-  state.tasks[key] = tasksFor(todayKey())
+  state.tasks[key] = tasksFor(priorKey())
     .filter(function (t) { return !t.done; })
     .map(function (t) { return { text: t.text, done: false }; })
     .slice(0, MAX_TASKS);
@@ -1286,10 +1305,13 @@ function renderTasks(evening) {
         input.value = tomorrow[i] ? tomorrow[i].text : "";
       }
     }
-    const mine = tasksFor(todayKey());
+    el("tomorrow-h").textContent = lateNight() ? "Today" : "Tomorrow";
+
+    const mine = tasksFor(priorKey());
     const done = mine.filter(function (t) { return t.done; }).length;
+    const label = lateNight() ? "Yesterday: " : "Today: ";
     el("today-tally").textContent = mine.length
-      ? "Today: " + done + " of " + mine.length + " done."
+      ? label + done + " of " + mine.length + " done."
       : "";
     el("today-tally").hidden = mine.length === 0;
     return;
