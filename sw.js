@@ -1,19 +1,33 @@
 /* Keeps a copy of the app on the phone so it opens with no signal.
    Bump VERSION whenever the app files change. */
 
-const VERSION = "the-build-v17";
+const VERSION = "the-build-v25";
 const PAGE = "./index.html";
-const ASSETS = ["./", PAGE, "./manifest.json", "./icon-180.png", "./icon-512.png"];
+
+/* The page boots without rooms.js, but with no rooms table there is no Home, no
+   Notes and no triage — half the app. A saved copy missing it would still call
+   itself a complete offline copy, and the phone would only find out in a
+   driveway with no signal, so these two stand or fall together. */
+const CRITICAL = [PAGE, "./rooms.js"];
+
+/* The icons, the manifest and the directory alias are decoration: without any of
+   them the tracker still opens and still logs. Each is saved on its own and its
+   failure swallowed, so one bad upload does not throw away the whole copy the
+   way cache.addAll would. */
+const OPTIONAL = ["./", "./manifest.json", "./icon-180.png", "./icon-512.png"];
+
 const NETWORK_WAIT = 2500;
 
-/* Each file is saved on its own. One missing file (a bad upload, say) must not
-   throw away the whole offline copy the way cache.addAll would. */
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(VERSION).then(function (cache) {
-      return Promise.all(ASSETS.map(function (url) {
-        return cache.add(url).catch(function () { return null; });
-      }));
+      return Promise.all(CRITICAL.map(function (url) {
+        return cache.add(url);
+      })).then(function () {
+        return Promise.all(OPTIONAL.map(function (url) {
+          return cache.add(url).catch(function () { return null; });
+        }));
+      });
     }).then(function () { return self.skipWaiting(); })
   );
 });

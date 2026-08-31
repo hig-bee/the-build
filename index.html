@@ -4,24 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0c0d0f">
+<meta name="theme-color" content="#0f1411">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="The Build">
-<meta name="build" content="17">
+<meta name="apple-mobile-web-app-title" content="Higs">
+<meta name="build" content="25">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
-<title>The Build</title>
+<title>Higs</title>
 <style>
 :root {
-  --bg: #0c0d0f;
-  --surface: #16181c;
-  --line: #23262c;
-  --text: #e8e6e3;
-  --dim: #8b8f96;
-  --accent: #d9713f;
-  --focus: #6fa8dc;
-  --radius: 14px;
+  --bg: #0f1411;
+  --surface: #1a2119;
+  --line: #394433;
+  --text: #f0e9d8;
+  --dim: #a9a28e;
+  --accent: #8e2f3a;
+  --focus: #d2a13c;
+  --radius: 16px;
   --tap: 44px;
 }
 
@@ -34,6 +34,12 @@ html, body {
   font: 400 17px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed so the gradient stays anchored to the viewport rather than repeating
+   as the long Fitness panel scrolls underneath it. */
+body {
+  background: radial-gradient(900px 420px at 50% -12%, #243522 0%, #0f1411 62%) fixed;
 }
 
 :focus-visible {
@@ -109,6 +115,7 @@ html, body {
   border-radius: var(--radius);
   padding: 16px;
   text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 24px rgba(0,0,0,.45);
 }
 .eyebrow {
   margin: 0 0 4px;
@@ -172,14 +179,15 @@ html, body {
   margin-top: 12px;
   width: 100%;
   min-height: 52px;
-  background: var(--accent);
-  color: #12100e;
+  background: linear-gradient(180deg, #a03a46, #762630);
+  color: #fff;
   border: 0;
-  border-radius: 12px;
+  border-radius: 11px;
   font-size: 18px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,.45);
 }
 .done:active { filter: brightness(0.9); }
 
@@ -649,11 +657,287 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* Rail + panels — replaces the six-tile Home screen. The rail is a permanent
+   strip of room icons; the panel takes the rest of the screen. 64px is
+   repeated in the two rules below rather than lifted into a root variable,
+   since the repaint's :root list is fixed on purpose. */
+.shell {
+  min-height: 100vh;
+}
+
+.rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 5;
+  width: calc(64px + env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: max(12px, env(safe-area-inset-top)) 0 calc(12px + env(safe-area-inset-bottom))
+    env(safe-area-inset-left);
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+}
+
+.panels {
+  margin-left: calc(64px + env(safe-area-inset-left));
+}
+
+.rail-slot {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 0;
+  border-radius: 12px;
+  font-size: 22px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* The lifted background plus a tint-coloured edge is the "you are here"
+   marker; aria-current carries the same information for a screen reader. */
+.rail-slot[aria-current="page"] {
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 24px rgba(0,0,0,.45);
+}
+.rail-slot[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--tint, var(--accent));
+}
+
+.rail-slot:disabled { opacity: 0.4; cursor: default; }
+
+/* A status, not a notification: quiet numeral, no dot, no motion. */
+.rail-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--line);
+  color: var(--dim);
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Room headers */
+.room-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+}
+
+.room-head h1, .room-head h2 { margin: 0; font-size: 19px; }
+
+/* A room's one-line status, sitting beside its name. Panels that already lead
+   with their own summary card leave this out rather than saying it twice. */
+.room-status {
+  margin: 0 0 0 auto;
+  color: var(--dim);
+  font-size: 14px;
+  text-align: right;
+}
+
+/* Notes */
+#note-text {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+.note-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.note-row:last-child { border-bottom: 0; }
+
+.note-text { margin: 0; overflow-wrap: anywhere; }
+
+.note-meta {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.note-back {
+  min-height: var(--tap);
+  margin-top: 2px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* .rest gives no height of its own; #rest-line gets enough from its stacked
+   child rows, but #open-triage is a single line, so it needs its own floor. */
+/* The way into the core loop. As bare text it read as a caption, so it is given
+   a surface and an edge to look like the control it is. */
+#open-triage {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid #445040;
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Triage */
+.triage-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.done.quiet {
+  background: var(--surface);
+  border: 1px solid #445040;
+  color: var(--text);
+  box-shadow: none;
+}
+
+/* Finance */
+/* .done is written for a <button>; borrowing it for the "Open the workbook"
+   link needs display fixed up, since an <a> defaults to inline rather than
+   the block a 100%-width button gets for free. */
+a.done { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+
+#fin-total { font-variant-numeric: tabular-nums; }
+
+.fin-msg { margin: 6px 0 0; color: var(--dim); font-size: 13px; }
+
+.fin-loc { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.fin-loc:last-child { border-bottom: 0; }
+.fin-loc-top { display: flex; align-items: center; gap: 10px; }
+.fin-loc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fin-loc-name { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.fin-loc-value {
+  align-self: flex-start;
+  margin: 0 0 0 -6px;
+  padding: 0 6px;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+/* A negative balance is a fact, not an error — dim, not red. */
+.fin-loc-value.neg { color: var(--dim); }
+.fin-loc-updated { margin: 0; color: var(--dim); font-size: 13px; }
+
+.fin-quick {
+  flex: none;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid #445040;
+  border-radius: 10px;
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.fin-loc-edit { margin-top: 8px; }
+
+.fin-loc-target { margin-top: 8px; }
+.fin-loc-target-line { margin: 0 0 6px; color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.fin-progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.fin-progress-fill { height: 100%; background: var(--accent); }
+
+.fin-loc-remove {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 4px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fin-activity-line { font-variant-numeric: tabular-nums; }
+/* Lounge pass, build 25: lamp-light vignette, serif headings, brass labels.
+   Kept at whisper level on purpose - flavour must never cost legibility. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(130% 100% at 50% 0%, transparent 55%, rgba(0,0,0,.38) 100%);
+  z-index: 99;
+}
+.room-head h1, .room-head h2, #week-label, #session-name, .sheet-head h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: .02em;
+}
+.done { text-shadow: 0 1px 0 rgba(0,0,0,.3); }
+.eyebrow, .list h3 { color: #d2a13c; }
 </style>
 </head>
 <body>
 
-<main class="screen">
+<div class="shell">
+<nav class="rail" id="rail" aria-label="Rooms"></nav>
+<div class="panels">
+
+<main class="screen" id="fitness-screen">
+  <div class="room-head">
+    <h2>Fitness</h2>
+    <!-- No status line here on purpose: this panel already leads with the
+         session card, so a summary in the header would just say it twice. -->
+  </div>
 
   <!-- 1. Header -->
   <header class="head">
@@ -769,12 +1053,138 @@ html, body {
       <button type="button" id="open-ladder">The ladder</button>
       <button type="button" id="open-summary">Evening summary</button>
     </div>
+
+    <section class="list" id="fitness-notes" aria-labelledby="fitness-notes-h" hidden>
+      <h3 id="fitness-notes-h">Fitness notes</h3>
+      <div id="fitness-notes-items"></div>
+    </section>
+
     <p class="footnote" id="offline-note">Checking offline copy…</p>
     <button type="button" class="export" id="export">Export data</button>
     <p class="footnote" id="build-note">Everything logged so far, as a file you keep.</p>
   </footer>
 
 </main>
+
+<main class="screen" id="finance-screen" hidden>
+  <div class="room-head">
+    <h1>Finance</h1>
+    <p class="room-status" id="finance-status"></p>
+  </div>
+
+  <!-- Total: the consolidation across every location, so it leads and is the
+       largest type on the screen. -->
+  <section class="card">
+    <p class="eyebrow">Total</p>
+    <h2 id="fin-total"></h2>
+    <p class="guidance" id="fin-total-sub"></p>
+  </section>
+
+  <!-- Workbook: the door to the real spreadsheet. Only http/https ever reaches
+       the href — see financeSafeUrl() in the script below. -->
+  <section class="list" aria-labelledby="fin-workbook-h">
+    <h3 id="fin-workbook-h">Workbook</h3>
+    <a href="#" class="done" id="fin-workbook-open" target="_blank" rel="noopener noreferrer" hidden>Open the workbook</a>
+    <button type="button" class="done quiet" id="fin-workbook-add" hidden>Add the workbook link</button>
+    <button type="button" class="done quiet" id="fin-workbook-change" hidden>Change the workbook link</button>
+    <div id="fin-workbook-edit" hidden>
+      <label class="field">
+        <span>Workbook link</span>
+        <input type="text" id="fin-workbook-input" inputmode="url" enterkeyhint="done"
+               placeholder="https://..." aria-label="Workbook link">
+      </label>
+      <div class="done-row">
+        <button type="button" id="fin-workbook-save">Save</button>
+        <button type="button" id="fin-workbook-cancel">Cancel</button>
+      </div>
+    </div>
+    <p class="fin-msg" id="fin-workbook-msg" hidden></p>
+  </section>
+
+  <section class="list" id="fin-locations" aria-labelledby="fin-locations-h">
+    <h3 id="fin-locations-h">Locations</h3>
+    <div id="fin-locations-items"></div>
+    <p class="empty" id="fin-locations-empty" hidden>No locations yet. Add one below.</p>
+  </section>
+
+  <section class="list" aria-labelledby="fin-add-h">
+    <h3 id="fin-add-h">Add a location</h3>
+    <label class="field">
+      <span>Label</span>
+      <input type="text" id="fin-add-label" maxlength="40" enterkeyhint="next"
+             placeholder="Roth IRA" aria-label="Location label">
+    </label>
+    <div class="log">
+      <label class="field">
+        <span>Starting value</span>
+        <input type="text" inputmode="decimal" id="fin-add-value" enterkeyhint="next"
+               placeholder="0" aria-label="Starting value">
+      </label>
+      <label class="field">
+        <span>Quick add</span>
+        <input type="text" inputmode="decimal" id="fin-add-quick" enterkeyhint="next"
+               placeholder="10" aria-label="Quick add amount">
+      </label>
+      <label class="field">
+        <span>Annual target</span>
+        <input type="text" inputmode="decimal" id="fin-add-target" enterkeyhint="done"
+               placeholder="7000" aria-label="Annual target">
+      </label>
+    </div>
+    <button type="button" class="done" id="fin-add-save">Add location</button>
+    <p class="fin-msg" id="fin-add-msg" hidden></p>
+    <p class="hint">Label and amount only. No account numbers.</p>
+  </section>
+
+  <section class="list" id="fin-activity" aria-labelledby="fin-activity-h" hidden>
+    <h3 id="fin-activity-h">Recent activity</h3>
+    <div id="fin-activity-items"></div>
+  </section>
+
+  <section class="list" id="finance-notes" aria-labelledby="finance-notes-h" hidden>
+    <h3 id="finance-notes-h">Finance notes</h3>
+    <div id="finance-notes-items"></div>
+  </section>
+</main>
+
+<main class="screen" id="notes-screen" hidden>
+  <div class="room-head">
+    <h1>Notes</h1>
+    <p class="room-status" id="notes-status"></p>
+  </div>
+
+  <textarea id="note-text" maxlength="500" enterkeyhint="done"
+            placeholder="Anything. Sort it later." aria-label="New note"></textarea>
+  <button type="button" class="done" id="note-save">Save</button>
+
+  <button type="button" class="rest" id="open-triage" hidden></button>
+
+  <section class="list" aria-labelledby="notes-h">
+    <h3 id="notes-h">In Notes</h3>
+    <div id="notes-items"></div>
+    <p class="empty" id="notes-empty" hidden>Nothing here yet. Dump something.</p>
+  </section>
+</main>
+
+<main class="screen" id="triage-screen" hidden>
+  <div class="room-head">
+    <button type="button" class="back" id="triage-back" data-back="notes-screen">&lsaquo; Notes</button>
+    <h1>Triage</h1>
+  </div>
+
+  <p class="tally" id="triage-count" hidden></p>
+
+  <section class="card" id="triage-card" hidden aria-live="polite">
+    <p class="note-text" id="triage-text"></p>
+    <p class="eyebrow" id="triage-guess"></p>
+    <div class="triage-actions" id="triage-actions"></div>
+  </section>
+
+  <p class="empty" id="triage-empty" hidden>Nothing to triage.</p>
+</main>
+
+</div>
+</div>
 
 <!-- The week checklist -->
 <div class="sheet" id="week-sheet" hidden>
@@ -845,6 +1255,7 @@ html, body {
   </div>
 </div>
 
+<script src="./rooms.js"></script>
 <script>
 "use strict";
 
@@ -874,11 +1285,22 @@ const PLAN = [
 
 const TOTAL_WEEKS = PLAN.length;
 const HALF_CAP = 13.1;
+/* The app is called Higs now, but this key is its original name on purpose:
+   every logged run and note on the phone is saved under it. Renaming the key
+   orphans all of that data. It never changes, whatever the app is called. */
 const STORE_KEY = "the-build";
 const RING_C = 169.6; // 2 * PI * 27
 const MAX_TASKS = 3;
 const EVENING_AT = 20 * 60 + 30;   // 8:30 PM
 const LATE_END = 3 * 60;           // 3:00 AM — the evening runs through midnight
+
+/* rooms.js is a separate file, so it can fail to arrive: a bad upload, or a
+   service worker that cached everything else. The tracker holds months of logged
+   runs that exist nowhere but this phone, so it has to open and it has to keep
+   its Export button whatever happened to the rooms table. Everything that
+   touches Rooms is gated on this; when it is false the app falls back to the
+   tracker alone, which is exactly what it was before rooms existed. */
+const ROOMS_READY = Boolean(window.Rooms);
 
 /* ---------- state ---------- */
 
@@ -905,7 +1327,23 @@ function load() {
     tasks: saved.tasks || {},
     extras: saved.extras || {},
     weekHistory: saved.weekHistory || [],
-    lastClosed: saved.lastClosed || 0
+    lastClosed: saved.lastClosed || 0,
+    /* Without rooms.js the saved notes are carried through untouched rather than
+       rebuilt or dropped: nothing on screen can reach them, and the next save
+       must not be the thing that erases them. */
+    notes: ROOMS_READY ? Rooms.migrate(saved.notes)
+                       : (Array.isArray(saved.notes) ? saved.notes : []),
+
+    /* Same guard as notes above: without rooms.js the saved finance object is
+       carried through untouched rather than rebuilt or dropped. */
+    finance: ROOMS_READY ? Rooms.migrateFinance(saved.finance) : (saved.finance || null),
+
+    /* `v` records the shape a save was written with, so whatever is there is
+       kept. A save with no `v` is stamped 1 — the shape that existed before this
+       field did — never the current version, which would relabel old data as new.
+       Nothing reads `v` yet, so raising Rooms.STORE_VERSION means first writing
+       the migration that reads it. */
+    v: saved.v || 1
   };
 }
 
@@ -1240,6 +1678,594 @@ const el = function (id) { return document.getElementById(id); };
 
 /* The session whose numbers are open for correction, if any. */
 let editingId = null;
+
+/* ---------- screens ---------- */
+
+/* Notes and Triage are fixtures; every other screen belongs to a room, so
+   the list is read off the ROOMS table instead of being written out again here.
+   Rooms that are not live are listed too — their <main> simply does not exist
+   yet, and showScreen skips what it cannot find. */
+const SCREENS = ["notes-screen", "triage-screen"].concat(
+  (ROOMS_READY ? Rooms.ROOMS : []).map(function (room) { return screenFor(room.id); })
+);
+
+/* What each live room puts on its own screen: the renderer that fills it, and the
+   line its room header shows. Fitness is the training screen. Finance registers
+   itself here the day it is built, and nothing else in this file changes. */
+const ROOM_VIEWS = {
+  fitness: { render: render, line: fitnessLine },
+  finance: { render: renderFinance, line: financeLine }
+};
+
+/* The screen currently showing. Reopening the app re-renders this one, so a
+   stale render from before midnight is never left on screen. The app opens
+   straight on Fitness — there is no home screen to fall back to. */
+let currentScreen = "fitness-screen";
+
+function screenFor(roomId) {
+  return roomId + "-screen";
+}
+
+function roomOf(screenId) {
+  return screenId.slice(0, -"-screen".length);
+}
+
+/* One card at a time, oldest first. Both outcomes are always offered regardless
+   of what was suggested, so a bad guess costs nothing. */
+function renderTriage() {
+  const queue = Rooms.untriaged(state.notes);
+
+  renderRail();
+
+  el("triage-empty").hidden = queue.length > 0;
+  el("triage-card").hidden = queue.length === 0;
+  el("triage-count").hidden = queue.length === 0;
+  if (!queue.length) return;
+
+  const note = queue[0];
+  el("triage-count").textContent = queue.length === 1 ? "1 left" : queue.length + " left";
+  el("triage-text").textContent = note.text;
+
+  const guess = Rooms.suggestRoom(note.text);
+  const room = guess ? Rooms.roomById(guess) : null;
+  el("triage-guess").textContent = room ? "Looks like: " + room.label : "No clear fit.";
+
+  const actions = el("triage-actions");
+  actions.innerHTML = "";
+
+  /* Buttons are built from whatever rooms are live. At five rooms this is five
+     buttons and the same code. */
+  Rooms.liveRooms().forEach(function (r) {
+    actions.appendChild(action("Send to " + r.label, r.id === guess, function () {
+      Rooms.promote(state.notes, note.id, r.id, new Date().toISOString());
+      save();
+      renderTriage();
+    }));
+  });
+
+  actions.appendChild(action("Keep in Notes", !guess, function () {
+    Rooms.keep(state.notes, note.id);
+    save();
+    renderTriage();
+  }));
+}
+
+function action(label, suggested, go) {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.className = suggested ? "done" : "done quiet";
+  node.textContent = label;
+  node.addEventListener("click", go);
+  return node;
+}
+
+/* Every screen is a top-level <main>; exactly one is visible. */
+function showScreen(id) {
+  /* A room can be flipped live before its markup lands. Hiding everything to show
+     a screen that does not exist would read as a crash, so stay where we are. */
+  if (!el(id)) return;
+
+  SCREENS.forEach(function (name) {
+    const node = el(name);
+    if (node) node.hidden = name !== id;
+  });
+  window.scrollTo(0, 0);
+
+  currentScreen = id;
+  renderRail();
+  renderScreen(id);
+}
+
+/* The one place a screen id turns into a render. Both showScreen and the
+   reopened-app handler come through here, so they can never disagree about what
+   is on screen. */
+function renderScreen(id) {
+  if (id === "notes-screen") return renderNotes();
+  if (id === "triage-screen") return renderTriage();
+
+  const room = roomOf(id);
+  const view = ROOM_VIEWS[room];
+  if (!view) return;
+  view.render();
+  /* Fitness deliberately has no #fitness-status — its panel already leads with
+     the session card, so a header repeat would say it twice — and it simply
+     has no element for this to find. Finance has one, so it gets filled. */
+  const status = el(room + "-status");
+  if (status && view.line) status.textContent = view.line();
+  /* The notes list is written once and drawn for whichever room is showing —
+     never from inside a room's own renderer, or it would run twice here. */
+  renderRoomNotes(room);
+}
+
+/* The room header answers "what am I doing today?" without costing a tap. */
+function fitnessLine() {
+  if (!started()) return "Starts Sunday";
+  const week = currentWeek();
+  if (ranToday(week)) return "Logged today";
+  const s = todaysSession(week, today().getDay());
+  return s ? s.name + " · " + s.dist + " mi" : "Rest";
+}
+
+function notesLine() {
+  const held = Rooms.inbox(state.notes).length;
+  const waiting = Rooms.untriaged(state.notes).length;
+  if (!held) return "Empty";
+  return held + (held === 1 ? " note" : " notes") +
+    (waiting ? " · " + waiting + " to triage" : "");
+}
+
+/* The rail replaces the old home tiles: one slot per row of the ROOMS table,
+   Notes appended last. Rebuilt on every call rather than patched in place —
+   six buttons is cheap enough that redrawing is simpler than diffing, and it
+   means a screen switch or a notes count change can never leave a stale
+   selection or a stale badge behind. Skipped entirely without rooms.js: the
+   nav stays empty and the tracker underneath does not care. */
+function renderRail() {
+  const rail = el("rail");
+  if (!rail || !ROOMS_READY) return;
+
+  rail.innerHTML = "";
+
+  Rooms.ROOMS.forEach(function (room) {
+    rail.appendChild(railSlot(screenFor(room.id), room.icon, room.label, room.tint, room.live, 0));
+  });
+
+  rail.appendChild(railSlot("notes-screen", "📥", "Notes", "#b05a4a", true,
+    Rooms.untriaged(state.notes).length));
+}
+
+/* Triage is a step inside Notes rather than a room of its own, so it has no rail
+   slot. Leaving the rail with nothing lit while you are in it reads as being
+   nowhere, so Notes stays lit for both. */
+function railTarget() {
+  return currentScreen === "triage-screen" ? "notes-screen" : currentScreen;
+}
+
+function railSlot(screenId, icon, label, tint, live, count) {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.className = "rail-slot";
+  node.id = "rail-" + screenId;
+  node.disabled = !live;
+  node.setAttribute("aria-label", label);
+  node.style.setProperty("--tint", tint);
+  if (screenId === railTarget()) node.setAttribute("aria-current", "page");
+
+  const iconEl = document.createElement("span");
+  iconEl.setAttribute("aria-hidden", "true");
+  iconEl.textContent = icon;
+  node.appendChild(iconEl);
+
+  /* A status, not a notification: no badge at all at zero. */
+  if (count) {
+    const badge = document.createElement("span");
+    badge.className = "rail-count";
+    badge.textContent = String(count);
+    node.appendChild(badge);
+  }
+
+  if (live) node.addEventListener("click", function () { showScreen(screenId); });
+  return node;
+}
+
+function renderNotes() {
+  const held = Rooms.inbox(state.notes);
+  const waiting = Rooms.untriaged(state.notes).length;
+
+  el("notes-status").textContent = notesLine();
+
+  const triage = el("open-triage");
+  triage.hidden = waiting === 0;
+  triage.textContent = waiting === 1 ? "Triage · 1 waiting ›"
+                                     : "Triage · " + waiting + " waiting ›";
+
+  el("notes-empty").hidden = held.length > 0;
+
+  const box = el("notes-items");
+  box.innerHTML = "";
+  held.forEach(function (note) {
+    const row = document.createElement("div");
+    row.className = "note-row";
+
+    const text = document.createElement("p");
+    text.className = "note-text";
+    text.textContent = note.text;          /* never innerHTML: this is typed text */
+
+    const meta = document.createElement("p");
+    meta.className = "note-meta";
+    meta.textContent = note.created.slice(0, 10) + (note.triaged ? " · reviewed" : "");
+
+    row.appendChild(text);
+    row.appendChild(meta);
+    box.appendChild(row);
+  });
+
+  renderRail();
+}
+
+/* Written once, reused by every room: a room screen only has to contain
+   #<roomId>-notes and #<roomId>-notes-items. */
+function renderRoomNotes(roomId) {
+  const section = el(roomId + "-notes");
+  if (!section || !ROOMS_READY) return;
+
+  const list = Rooms.forRoom(state.notes, roomId);
+  section.hidden = list.length === 0;
+
+  const box = el(roomId + "-notes-items");
+  box.innerHTML = "";
+
+  list.forEach(function (note) {
+    const row = document.createElement("div");
+    row.className = "note-row";
+
+    const text = document.createElement("p");
+    text.className = "note-text";
+    text.textContent = note.text;
+
+    const meta = document.createElement("p");
+    meta.className = "note-meta";
+    meta.textContent = note.promoted ? note.promoted.slice(0, 10) : "";
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "note-back";
+    back.textContent = "Back to Notes";
+    back.addEventListener("click", function () {
+      Rooms.sendBack(state.notes, note.id);
+      save();
+      renderRoomNotes(roomId);
+    });
+
+    row.appendChild(text);
+    row.appendChild(meta);
+    row.appendChild(back);
+    box.appendChild(row);
+  });
+
+  renderRail();
+}
+
+/* ---------- finance ---------- */
+
+/* Which location's value is mid-edit, and whether the workbook-link input is
+   showing. Neither belongs in state.finance — it is UI-only, so reopening the
+   app never lands back in an editing view, and it resets on every navigation
+   away from the screen. */
+let financeEditingId = null;
+let financeWorkbookEditing = false;
+
+/* A javascript: URL sitting in an <a href> runs the instant the link is
+   tapped, so this is the one gate between a pasted string and it executing as
+   code. new URL() throws on garbage, and a scheme like javascript: or data:
+   parses fine but fails the protocol check — a substring test on the raw text
+   would miss both cases new URL() catches for free. */
+function financeSafeUrl(text) {
+  try {
+    const u = new URL(String(text || "").trim());
+    return (u.protocol === "http:" || u.protocol === "https:") ? u.href : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Cents back to the plain decimal string an edit box seeds itself with —
+   the inverse of what toCents will read back out of that same box. */
+function financeInputValue(cents) {
+  return ((Number.isFinite(cents) ? cents : 0) / 100).toFixed(2);
+}
+
+function financeLine() {
+  const n = state.finance.locations.length;
+  return n ? n + (n === 1 ? " location" : " locations") : "Nothing yet";
+}
+
+function renderFinance() {
+  /* renderScreen() also sets #finance-status from financeLine(), but only on
+     navigation — every in-screen action (add, remove, contribute) calls this
+     function directly, and the header would otherwise go stale the moment a
+     location count changes while the panel is already open. */
+  const status = el("finance-status");
+  if (status) status.textContent = financeLine();
+
+  el("fin-total").textContent = Rooms.formatMoney(Rooms.totalValue(state.finance));
+  const n = state.finance.locations.length;
+  el("fin-total-sub").textContent = "across " + n + (n === 1 ? " location" : " locations");
+
+  renderFinanceWorkbook();
+  renderFinanceLocations();
+  renderFinanceActivity();
+}
+
+function renderFinanceWorkbook() {
+  const safe = financeSafeUrl(state.finance.workbookUrl);
+  const openBtn = el("fin-workbook-open");
+  const addBtn = el("fin-workbook-add");
+  const changeBtn = el("fin-workbook-change");
+
+  el("fin-workbook-edit").hidden = !financeWorkbookEditing;
+
+  if (financeWorkbookEditing) {
+    openBtn.hidden = true;
+    addBtn.hidden = true;
+    changeBtn.hidden = true;
+    el("fin-workbook-input").value = state.finance.workbookUrl || "";
+    return;
+  }
+
+  el("fin-workbook-msg").hidden = true;
+  openBtn.hidden = !safe;
+  addBtn.hidden = Boolean(safe);
+  changeBtn.hidden = !safe;
+  /* Only ever set from financeSafeUrl's own output, never from the raw saved
+     string — a corrupted or hand-edited save must not reach the href either. */
+  if (safe) {
+    openBtn.href = safe;
+  } else {
+    openBtn.removeAttribute("href");
+  }
+}
+
+function openFinanceWorkbookEdit() {
+  financeWorkbookEditing = true;
+  renderFinanceWorkbook();
+  el("fin-workbook-input").focus();
+}
+
+function renderFinanceLocations() {
+  const list = state.finance.locations;
+  el("fin-locations-empty").hidden = list.length > 0;
+
+  const box = el("fin-locations-items");
+  box.innerHTML = "";
+  list.forEach(function (loc) {
+    box.appendChild(financeLocationRow(loc));
+  });
+}
+
+function financeLocationRow(loc) {
+  const row = document.createElement("div");
+  row.className = "fin-loc";
+
+  const top = document.createElement("div");
+  top.className = "fin-loc-top";
+
+  const info = document.createElement("div");
+  info.className = "fin-loc-info";
+
+  const name = document.createElement("p");
+  name.className = "fin-loc-name";
+  name.textContent = loc.label; /* typed text: textContent only, never innerHTML */
+  info.appendChild(name);
+
+  const valueBtn = document.createElement("button");
+  valueBtn.type = "button";
+  valueBtn.className = "fin-loc-value" + (loc.value < 0 ? " neg" : "");
+  valueBtn.textContent = Rooms.formatMoney(loc.value);
+  valueBtn.setAttribute("aria-label", "Edit value for " + loc.label);
+  valueBtn.addEventListener("click", function () {
+    financeEditingId = financeEditingId === loc.id ? null : loc.id;
+    renderFinanceLocations();
+  });
+  info.appendChild(valueBtn);
+
+  const updated = document.createElement("p");
+  updated.className = "fin-loc-updated";
+  updated.textContent = "Updated " + String(loc.updated).slice(0, 10);
+  info.appendChild(updated);
+
+  top.appendChild(info);
+
+  if (Number.isFinite(loc.quickAdd) && loc.quickAdd) {
+    top.appendChild(financeQuickAddButton(loc));
+  }
+  row.appendChild(top);
+
+  if (loc.id === financeEditingId) {
+    row.appendChild(financeEditRow(loc));
+  }
+
+  if (Number.isFinite(loc.target) && loc.target > 0) {
+    row.appendChild(financeTargetRow(loc));
+  }
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "fin-loc-remove";
+  remove.textContent = "Remove";
+  remove.setAttribute("aria-label", "Remove " + loc.label);
+  remove.addEventListener("click", function () { removeFinanceLocation(loc.id); });
+  row.appendChild(remove);
+
+  return row;
+}
+
+function financeQuickAddButton(loc) {
+  const amount = Rooms.formatMoney(loc.quickAdd);
+  const quick = document.createElement("button");
+  quick.type = "button";
+  quick.className = "fin-quick";
+  quick.textContent = "+ " + amount;
+  quick.setAttribute("aria-label", "Add " + amount + " to " + loc.label);
+  quick.addEventListener("click", function () {
+    /* No confirmation step — that is the point of a quick add. */
+    Rooms.contribute(state.finance, loc.id, loc.quickAdd, new Date().toISOString());
+    save();
+    renderFinance();
+  });
+  return quick;
+}
+
+/* A correction, not a contribution: setValue writes no log entry, unlike
+   contribute() above. */
+function financeEditRow(loc) {
+  const wrap = document.createElement("div");
+  wrap.className = "fin-loc-edit";
+
+  const field = document.createElement("label");
+  field.className = "field";
+  const span = document.createElement("span");
+  span.textContent = "New value";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.inputMode = "decimal";
+  input.value = financeInputValue(loc.value);
+  input.setAttribute("aria-label", "New value for " + loc.label);
+  field.appendChild(span);
+  field.appendChild(input);
+  wrap.appendChild(field);
+
+  const msg = document.createElement("p");
+  msg.className = "fin-msg";
+  msg.hidden = true;
+
+  const actions = document.createElement("div");
+  actions.className = "done-row";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.textContent = "Save";
+  saveBtn.addEventListener("click", function () {
+    const cents = Rooms.toCents(input.value);
+    if (cents === null) {
+      msg.textContent = "Enter a number, like 1200 or 1200.50.";
+      msg.hidden = false;
+      return;
+    }
+    Rooms.setValue(state.finance, loc.id, cents, new Date().toISOString());
+    save();
+    financeEditingId = null;
+    renderFinance();
+  });
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.addEventListener("click", function () {
+    financeEditingId = null;
+    renderFinanceLocations();
+  });
+
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  wrap.appendChild(actions);
+  wrap.appendChild(msg);
+  return wrap;
+}
+
+function financeTargetRow(loc) {
+  const wrap = document.createElement("div");
+  wrap.className = "fin-loc-target";
+
+  const year = today().getFullYear();
+  const contributed = Rooms.contributedInYear(state.finance, loc.id, year);
+  const pct = Math.max(0, Math.min(100, (contributed / loc.target) * 100));
+
+  const line = document.createElement("p");
+  line.className = "fin-loc-target-line";
+  line.textContent = Rooms.formatMoney(contributed) + " of " + Rooms.formatMoney(loc.target) + " this year";
+  wrap.appendChild(line);
+
+  const bar = document.createElement("div");
+  bar.className = "fin-progress";
+  const fill = document.createElement("div");
+  fill.className = "fin-progress-fill";
+  fill.style.width = pct + "%";
+  bar.appendChild(fill);
+  wrap.appendChild(bar);
+
+  return wrap;
+}
+
+function removeFinanceLocation(id) {
+  const loc = Rooms.locationById(state.finance, id);
+  if (!loc) return;
+  /* Destroys a balance, so it asks first. confirm() renders loc.label as plain
+     text regardless of content — no innerHTML involved. */
+  if (!window.confirm("Remove " + loc.label + "? This can't be undone.")) return;
+  state.finance.locations = state.finance.locations.filter(function (l) { return l.id !== id; });
+  if (financeEditingId === id) financeEditingId = null;
+  save();
+  renderFinance();
+}
+
+/* The last 8 entries, newest first. finance.log is already stored that way —
+   contribute() unshifts — so this is a plain slice, no re-sort. */
+function renderFinanceActivity() {
+  const section = el("fin-activity");
+  const log = state.finance.log.slice(0, 8);
+  section.hidden = log.length === 0;
+  if (!log.length) return;
+
+  const box = el("fin-activity-items");
+  box.innerHTML = "";
+  log.forEach(function (entry) {
+    const loc = Rooms.locationById(state.finance, entry.locationId);
+    const row = document.createElement("div");
+    row.className = "note-row";
+
+    const line = document.createElement("p");
+    line.className = "note-text fin-activity-line";
+    /* A location can be removed after it was logged; the trail is history, so
+       the entry still renders rather than throwing — just labelled as gone. */
+    line.textContent = (loc ? loc.label : "(removed)") + " · " + Rooms.formatMoney(entry.amount);
+
+    const meta = document.createElement("p");
+    meta.className = "note-meta";
+    meta.textContent = String(entry.at).slice(0, 10);
+
+    row.appendChild(line);
+    row.appendChild(meta);
+    box.appendChild(row);
+  });
+}
+
+function addFinanceLocation() {
+  const label = el("fin-add-label").value.trim();
+  const msg = el("fin-add-msg");
+
+  if (!label) {
+    msg.textContent = "Give it a label first.";
+    msg.hidden = false;
+    return;
+  }
+  msg.hidden = true;
+
+  const opts = {
+    value: Rooms.toCents(el("fin-add-value").value),
+    quickAdd: Rooms.toCents(el("fin-add-quick").value),
+    target: Rooms.toCents(el("fin-add-target").value)
+  };
+  state.finance.locations.unshift(Rooms.makeLocation(label, opts, new Date().toISOString()));
+  save();
+
+  el("fin-add-label").value = "";
+  el("fin-add-value").value = "";
+  el("fin-add-quick").value = "";
+  el("fin-add-target").value = "";
+
+  renderFinance();
+}
 
 function render() {
   const now = today();
@@ -1673,6 +2699,66 @@ el("reset-week").addEventListener("click", function () {
   state.weekShift = 0;
   save();
   render();
+});
+
+/* Delegated for the one back arrow left: Triage's, which returns to Notes.
+   The rail replaced every other screen's back button. The sheets keep their
+   own backs: those close an overlay, not a screen. */
+document.addEventListener("click", function (event) {
+  const button = event.target.closest("[data-back]");
+  if (button) showScreen(button.dataset.back);
+});
+
+el("note-save").addEventListener("click", function () {
+  const box = el("note-text");
+  const text = box.value.trim();
+  if (!text) return;
+  state.notes.unshift(Rooms.makeNote(text, new Date().toISOString()));
+  save();
+  box.value = "";
+  box.blur();
+  renderNotes();
+});
+
+el("open-triage").addEventListener("click", function () { showScreen("triage-screen"); });
+
+/* ---------- finance wiring ---------- */
+
+el("fin-add-save").addEventListener("click", addFinanceLocation);
+
+el("fin-workbook-add").addEventListener("click", openFinanceWorkbookEdit);
+el("fin-workbook-change").addEventListener("click", openFinanceWorkbookEdit);
+
+el("fin-workbook-cancel").addEventListener("click", function () {
+  financeWorkbookEditing = false;
+  renderFinanceWorkbook();
+});
+
+el("fin-workbook-save").addEventListener("click", function () {
+  const raw = el("fin-workbook-input").value;
+  const msg = el("fin-workbook-msg");
+
+  /* A blank save clears the link — the only way out once a bad paste has been
+     rejected is not to be stuck offering only "try again". */
+  if (!raw.trim()) {
+    state.finance.workbookUrl = null;
+    save();
+    financeWorkbookEditing = false;
+    renderFinanceWorkbook();
+    return;
+  }
+
+  const safe = financeSafeUrl(raw);
+  if (!safe) {
+    msg.textContent = "That doesn't look like a web address. Use a link starting with http or https.";
+    msg.hidden = false;
+    return;
+  }
+
+  state.finance.workbookUrl = safe;
+  save();
+  financeWorkbookEditing = false;
+  renderFinanceWorkbook();
 });
 
 /* ---------- secondary views ---------- */
@@ -2162,14 +3248,14 @@ el("summary-back").addEventListener("click", function () { closeSheet("summary-s
 /* On iPhone a plain download is unreliable inside a home screen app, so hand the
    file to the share sheet (Files, Mail, AirDrop) and fall back to a download. */
 el("export").addEventListener("click", function () {
-  const name = "the-build-" + ymd(today()) + ".json";
+  const name = "higs-" + ymd(today()) + ".json";
   const text = JSON.stringify(state, null, 2);
   const button = this;
 
   try {
     const file = new File([text], name, { type: "application/json" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "The Build" }).catch(function () {});
+      navigator.share({ files: [file], title: "Higs" }).catch(function () {});
       return;
     }
   } catch (e) {
@@ -2209,12 +3295,35 @@ document.addEventListener("visibilitychange", function () {
     closeWeeks();
     pruneTasks();
   }
-  render();
+  /* Whatever is showing gets redrawn, not just the training screen: an installed
+     app left sitting on Home would otherwise still show yesterday on its Fitness
+     tile. This also keeps the week-11 gate on Fitness, where it belongs — render()
+     is the only thing that raises it, and it only runs for that screen. */
+  renderScreen(currentScreen);
 });
 
 closeWeeks();
 pruneTasks();
-render();
+
+if (ROOMS_READY) {
+  showScreen("fitness-screen");
+} else {
+  bootWithoutRooms();
+}
+
+/* No rooms table means no rail and no notes anywhere, so the tracker becomes
+   the whole app again — exactly what it was before rooms existed. Shown
+   directly rather than through showScreen, which works off a room list that
+   does not exist in this state, and renderRail() already no-ops without one. */
+function bootWithoutRooms() {
+  SCREENS.forEach(function (name) {
+    const node = el(name);
+    if (node) node.hidden = true;
+  });
+  el("fitness-screen").hidden = false;
+  currentScreen = "fitness-screen";
+  render();
+}
 
 /* Offline support only works once the app is served over https; harmless everywhere
    else. The note says plainly whether the phone has its own copy yet, so the only way
