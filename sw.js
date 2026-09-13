@@ -1,7 +1,7 @@
 /* Keeps a copy of the app on the phone so it opens with no signal.
    Bump VERSION whenever the app files change. */
 
-const VERSION = "the-build-v25";
+const VERSION = "the-build-v26";
 const PAGE = "./index.html";
 
 /* The page boots without rooms.js, but with no rooms table there is no Home, no

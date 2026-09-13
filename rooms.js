@@ -51,11 +51,32 @@
       ]
     },
     {
-      /* Labelled Home, but the id is "maintenance": screen ids are built as
-         <roomid>-screen, and "home-screen" is already the front door. */
+      id: "living",
+      label: "Living",
+      icon: "🌴",
+      tint: "#3f9ea0",
+      live: true,
+      cadence: "Whenever something good comes up - weekends and trips",
+      /* No "brunch", "pool" or "park": each collides with an everyday sentence
+         that belongs somewhere else, and a wrong suggestion is worse than none. */
+      words: [
+        "travel", "traveling", "trip", "trips", "vacation", "flight", "flights",
+        "hotel", "airbnb", "beach", "hike", "hiking", "camping", "kayak",
+        "kayaking", "fishing", "boat", "boating", "cruise", "resort", "island",
+        "snorkel", "snorkeling", "restaurant", "restaurants", "food", "foodie",
+        "dinner", "brewery", "winery", "wine", "cigar", "cigars", "concert",
+        "festival", "museum", "weekend", "getaway", "adventure", "explore",
+        "golf", "reservation", "reservations", "sunset"
+      ]
+    },
+    {
+      /* The id stays "maintenance" whatever the label says: screen ids are built
+         as <roomid>-screen, and a room id must never change once notes can be
+         promoted into it. */
       id: "maintenance",
-      label: "Home",
-      icon: "🏠",
+      label: "Maintenance",
+      /* Not a house: the house belongs to the Today button in the bottom bar. */
+      icon: "🔧",
       tint: "#6b93ab",
       live: false,
       cadence: "Event-driven",
@@ -233,6 +254,15 @@
     return notes;
   }
 
+  /* The one note operation that cannot be undone, so it stays its own function
+     rather than a mode of keep or sendBack. The caller confirms first. */
+  function removeNote(notes, id) {
+    for (let i = notes.length - 1; i >= 0; i--) {
+      if (notes[i].id === id) notes.splice(i, 1);
+    }
+    return notes;
+  }
+
   function forRoom(notes, roomId) {
     return newestFirst(notes.filter(function (n) { return n.room === roomId; }));
   }
@@ -372,6 +402,95 @@
     };
   }
 
+  /* ---------- living ---------- */
+
+  /* Travel, adventure, food, the good-life side. Kept deliberately light: an item
+     is a thing to do, optionally dated, and eventually done. */
+  const LIVING_KINDS = ["Trip", "Adventure", "Food", "Local", "Leisure"];
+
+  function isYmd(value) {
+    return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  }
+
+  function makeLiving() {
+    return { items: [] };
+  }
+
+  function makeLivingItem(title, opts, nowIso) {
+    const o = opts || {};
+    return {
+      id: "lv-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+      title: String(title).trim(),
+      kind: LIVING_KINDS.indexOf(o.kind) > -1 ? o.kind : "Leisure",
+      date: isYmd(o.date) ? o.date : null,
+      done: false,
+      created: nowIso
+    };
+  }
+
+  function livingItemById(living, id) {
+    if (!living || !Array.isArray(living.items)) return null;
+    return living.items.filter(function (it) { return it.id === id; })[0] || null;
+  }
+
+  function setDone(living, id, done) {
+    const it = livingItemById(living, id);
+    if (it) it.done = Boolean(done);
+    return living;
+  }
+
+  function removeLivingItem(living, id) {
+    if (!living || !Array.isArray(living.items)) return living;
+    for (let i = living.items.length - 1; i >= 0; i--) {
+      if (living.items[i].id === id) living.items.splice(i, 1);
+    }
+    return living;
+  }
+
+  /* The three lists below partition every item exactly once: dated and ahead,
+     undated, or finished-or-passed. Dates stay YYYY-MM-DD strings, which sort
+     correctly as text, so a timezone can never move a plan onto another day.
+     A dated plan that passes without being ticked moves to the past list rather
+     than vanishing, so "did we ever go?" still has an answer. */
+  function upcoming(living, todayYmd) {
+    return living.items
+      .filter(function (it) { return !it.done && it.date && it.date >= todayYmd; })
+      .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  }
+
+  function someday(living) {
+    return newestFirst(living.items.filter(function (it) { return !it.done && !it.date; }));
+  }
+
+  function pastItems(living, todayYmd) {
+    return living.items
+      .filter(function (it) { return it.done || (it.date && it.date < todayYmd); })
+      .sort(function (a, b) {
+        const ka = a.date || a.created.slice(0, 10);
+        const kb = b.date || b.created.slice(0, 10);
+        return ka < kb ? 1 : ka > kb ? -1 : 0;
+      });
+  }
+
+  function migrateLiving(saved) {
+    const src = (saved && typeof saved === "object") ? saved : {};
+    const items = Array.isArray(src.items) ? src.items : [];
+    return {
+      items: items
+        .filter(function (it) { return it && typeof it.title === "string" && it.title.trim(); })
+        .map(function (it) {
+          return {
+            id: typeof it.id === "string" ? it.id : ("lv-" + Math.random().toString(36).slice(2, 9)),
+            title: it.title.trim(),
+            kind: LIVING_KINDS.indexOf(it.kind) > -1 ? it.kind : "Leisure",
+            date: isYmd(it.date) ? it.date : null,
+            done: Boolean(it.done),
+            created: typeof it.created === "string" ? it.created : new Date().toISOString()
+          };
+        })
+    };
+  }
+
   global.Rooms = {
     STORE_VERSION: STORE_VERSION,
     ROOMS: ROOMS,
@@ -386,6 +505,7 @@
     promote: promote,
     keep: keep,
     sendBack: sendBack,
+    removeNote: removeNote,
     forRoom: forRoom,
     toCents: toCents,
     formatMoney: formatMoney,
@@ -396,6 +516,16 @@
     contribute: contribute,
     contributedInYear: contributedInYear,
     totalValue: totalValue,
-    migrateFinance: migrateFinance
+    migrateFinance: migrateFinance,
+    LIVING_KINDS: LIVING_KINDS,
+    makeLiving: makeLiving,
+    makeLivingItem: makeLivingItem,
+    livingItemById: livingItemById,
+    setDone: setDone,
+    removeLivingItem: removeLivingItem,
+    upcoming: upcoming,
+    someday: someday,
+    pastItems: pastItems,
+    migrateLiving: migrateLiving
   };
 }(window));

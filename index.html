@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Higs">
-<meta name="build" content="25">
+<meta name="build" content="26">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Higs</title>
@@ -658,40 +658,46 @@ body {
   * { animation: none !important; transition: none !important; }
 }
 
-/* Rail + panels — replaces the six-tile Home screen. The rail is a permanent
-   strip of room icons; the panel takes the rest of the screen. 64px is
-   repeated in the two rules below rather than lifted into a root variable,
-   since the repaint's :root list is fixed on purpose. */
+/* Bottom bar + panels. The bar runs along the bottom, where a thumb already is,
+   so every room gets the full width of the screen. It holds the Today button,
+   then one slot per row of the ROOMS table, then Notes. When rooms outnumber the
+   width it scrolls sideways instead of squeezing or wrapping, so adding a ninth
+   room never forces a redesign. The id stays "rail" so nothing that already
+   finds it by name has to change. */
 .shell {
   min-height: 100vh;
 }
 
 .rail {
   position: fixed;
-  top: 0;
   left: 0;
+  right: 0;
   bottom: 0;
   z-index: 5;
-  width: calc(64px + env(safe-area-inset-left));
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: max(12px, env(safe-area-inset-top)) 0 calc(12px + env(safe-area-inset-bottom))
-    env(safe-area-inset-left);
+  gap: 0;
+  /* Eight 44px slots need 352px; this padding leaves that fitting on a 375px
+     phone with room to spare. A ninth slot scrolls instead of shrinking. */
+  padding: 6px calc(4px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom))
+    calc(4px + env(safe-area-inset-left));
   background: var(--bg);
-  border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+.rail::-webkit-scrollbar { display: none; }
 
+/* Room for the last line of every panel to clear the bar. */
 .panels {
-  margin-left: calc(64px + env(safe-area-inset-left));
+  padding-bottom: calc(68px + env(safe-area-inset-bottom));
 }
 
 .rail-slot {
   position: relative;
-  flex: none;
-  width: 48px;
-  height: 48px;
+  flex: 1 0 44px;
+  min-width: 44px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -712,15 +718,80 @@ body {
 .rail-slot[aria-current="page"]::before {
   content: "";
   position: absolute;
-  left: -1px;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
+  top: -7px;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
   background: var(--tint, var(--accent));
 }
 
 .rail-slot:disabled { opacity: 0.4; cursor: default; }
+
+/* Today is the way home rather than a room, so a hairline sets it apart —
+   a line rather than a gap, because the bar has no width to spare. */
+.rail-slot.rail-home::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--line);
+}
+
+/* Today — one card per room that has something to say, then Notes. */
+.today-cards { display: flex; flex-direction: column; gap: 12px; }
+
+.today-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--tint, var(--line));
+  border-radius: var(--radius);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.35);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.today-icon { font-size: 22px; line-height: 1.3; }
+.today-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.today-label { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #d2a13c; }
+.today-headline {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.today-detail { font-size: 14px; color: var(--dim); overflow-wrap: anywhere; }
+.today-chev { align-self: center; color: var(--dim); font-size: 20px; }
+
+/* Action buttons under a note or a Living item. Delete is the only one that
+   cannot be undone, so it is the only one set apart by colour — a rose light
+   enough to stay readable on the green. */
+.note-actions { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.note-back.danger { color: #cf7f88; }
+
+/* Living */
+.lv-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field select {
+  min-height: var(--tap);
+  width: 100%;
+  background: #0f1114;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 17px;
+  padding: 0 10px;
+  font-family: inherit;
+}
+.lv-done .note-text { color: var(--dim); text-decoration: line-through; text-decoration-color: var(--line); }
 
 /* A status, not a notification: quiet numeral, no dot, no motion. */
 .rail-count {
@@ -931,6 +1002,22 @@ body::after {
 <div class="shell">
 <nav class="rail" id="rail" aria-label="Rooms"></nav>
 <div class="panels">
+
+<!-- Today: the front door. Its cards are assembled from the rooms at render
+     time, so a room built later shows up here without this markup changing. -->
+<main class="screen" id="today-screen" hidden>
+  <div class="room-head">
+    <h1>Today</h1>
+    <p class="room-status" id="today-date"></p>
+  </div>
+
+  <div class="today-cards" id="today-cards"></div>
+
+  <section class="list" id="today-soon" aria-labelledby="today-soon-h" hidden>
+    <h3 id="today-soon-h">Coming later</h3>
+    <p class="hint" id="today-soon-text"></p>
+  </section>
+</main>
 
 <main class="screen" id="fitness-screen">
   <div class="room-head">
@@ -1147,6 +1234,56 @@ body::after {
   </section>
 </main>
 
+<main class="screen" id="living-screen" hidden>
+  <div class="room-head">
+    <h1>Living</h1>
+    <p class="room-status" id="living-status"></p>
+  </div>
+
+  <section class="list" id="lv-upcoming" aria-labelledby="lv-upcoming-h" hidden>
+    <h3 id="lv-upcoming-h">Planned</h3>
+    <div id="lv-upcoming-items"></div>
+  </section>
+
+  <section class="list" id="lv-someday" aria-labelledby="lv-someday-h" hidden>
+    <h3 id="lv-someday-h">Someday</h3>
+    <div id="lv-someday-items"></div>
+  </section>
+
+  <p class="empty" id="lv-empty" hidden>Nothing planned yet. Add the next good thing below.</p>
+
+  <section class="list" aria-labelledby="lv-add-h">
+    <h3 id="lv-add-h">Add something</h3>
+    <label class="field">
+      <span>What</span>
+      <input type="text" id="lv-add-title" maxlength="80" enterkeyhint="done"
+             placeholder="Weekend in the Keys" aria-label="What to add">
+    </label>
+    <div class="lv-fields">
+      <label class="field">
+        <span>Kind</span>
+        <select id="lv-add-kind" aria-label="Kind"></select>
+      </label>
+      <label class="field">
+        <span>Date, if there is one</span>
+        <input type="date" id="lv-add-date" aria-label="Date">
+      </label>
+    </div>
+    <button type="button" class="done" id="lv-add-save">Add</button>
+    <p class="fin-msg" id="lv-add-msg" hidden></p>
+  </section>
+
+  <section class="list" id="lv-past" aria-labelledby="lv-past-h" hidden>
+    <h3 id="lv-past-h">Done and past</h3>
+    <div id="lv-past-items"></div>
+  </section>
+
+  <section class="list" id="living-notes" aria-labelledby="living-notes-h" hidden>
+    <h3 id="living-notes-h">Living notes</h3>
+    <div id="living-notes-items"></div>
+  </section>
+</main>
+
 <main class="screen" id="notes-screen" hidden>
   <div class="room-head">
     <h1>Notes</h1>
@@ -1337,6 +1474,7 @@ function load() {
     /* Same guard as notes above: without rooms.js the saved finance object is
        carried through untouched rather than rebuilt or dropped. */
     finance: ROOMS_READY ? Rooms.migrateFinance(saved.finance) : (saved.finance || null),
+    living: ROOMS_READY ? Rooms.migrateLiving(saved.living) : (saved.living || null),
 
     /* `v` records the shape a save was written with, so whatever is there is
        kept. A save with no `v` is stamped 1 — the shape that existed before this
@@ -1681,26 +1819,28 @@ let editingId = null;
 
 /* ---------- screens ---------- */
 
-/* Notes and Triage are fixtures; every other screen belongs to a room, so
+/* Today, Notes and Triage are fixtures; every other screen belongs to a room, so
    the list is read off the ROOMS table instead of being written out again here.
    Rooms that are not live are listed too — their <main> simply does not exist
    yet, and showScreen skips what it cannot find. */
-const SCREENS = ["notes-screen", "triage-screen"].concat(
+const SCREENS = ["today-screen", "notes-screen", "triage-screen"].concat(
   (ROOMS_READY ? Rooms.ROOMS : []).map(function (room) { return screenFor(room.id); })
 );
 
-/* What each live room puts on its own screen: the renderer that fills it, and the
-   line its room header shows. Fitness is the training screen. Finance registers
-   itself here the day it is built, and nothing else in this file changes. */
+/* Everything a live room contributes to the rest of the app, registered in one
+   place: the renderer that fills its screen, the line its header shows, and the
+   card it puts on Today. Building a room means adding its row here — Today, the
+   bar and the header all pick it up with no other edit in this file. */
 const ROOM_VIEWS = {
-  fitness: { render: render, line: fitnessLine },
-  finance: { render: renderFinance, line: financeLine }
+  fitness: { render: render, line: fitnessLine, card: fitnessCard },
+  finance: { render: renderFinance, line: financeLine, card: financeCard },
+  living: { render: renderLiving, line: livingLine, card: livingCard }
 };
 
 /* The screen currently showing. Reopening the app re-renders this one, so a
-   stale render from before midnight is never left on screen. The app opens
-   straight on Fitness — there is no home screen to fall back to. */
-let currentScreen = "fitness-screen";
+   stale render from before midnight is never left on screen. The app opens on
+   Today. */
+let currentScreen = "today-screen";
 
 function screenFor(roomId) {
   return roomId + "-screen";
@@ -1780,6 +1920,7 @@ function showScreen(id) {
    reopened-app handler come through here, so they can never disagree about what
    is on screen. */
 function renderScreen(id) {
+  if (id === "today-screen") return renderToday();
   if (id === "notes-screen") return renderNotes();
   if (id === "triage-screen") return renderTriage();
 
@@ -1814,17 +1955,21 @@ function notesLine() {
     (waiting ? " · " + waiting + " to triage" : "");
 }
 
-/* The rail replaces the old home tiles: one slot per row of the ROOMS table,
-   Notes appended last. Rebuilt on every call rather than patched in place —
-   six buttons is cheap enough that redrawing is simpler than diffing, and it
-   means a screen switch or a notes count change can never leave a stale
-   selection or a stale badge behind. Skipped entirely without rooms.js: the
-   nav stays empty and the tracker underneath does not care. */
+/* The bottom bar: the Today button, one slot per row of the ROOMS table, then
+   Notes. Rebuilt on every call rather than patched in place — a handful of
+   buttons is cheap enough that redrawing is simpler than diffing, and it means a
+   screen switch or a notes count change can never leave a stale selection or a
+   stale badge behind. Skipped entirely without rooms.js: the bar stays empty and
+   the tracker underneath does not care. */
 function renderRail() {
   const rail = el("rail");
   if (!rail || !ROOMS_READY) return;
 
   rail.innerHTML = "";
+
+  const home = railSlot("today-screen", "🏠", "Today", "#d2a13c", true, 0);
+  home.classList.add("rail-home");
+  rail.appendChild(home);
 
   Rooms.ROOMS.forEach(function (room) {
     rail.appendChild(railSlot(screenFor(room.id), room.icon, room.label, room.tint, room.live, 0));
@@ -1895,12 +2040,39 @@ function renderNotes() {
     meta.className = "note-meta";
     meta.textContent = note.created.slice(0, 10) + (note.triaged ? " · reviewed" : "");
 
+    const actions = document.createElement("div");
+    actions.className = "note-actions";
+    actions.appendChild(noteButton("Delete", true, function () {
+      deleteNote(note, renderNotes);
+    }));
+
     row.appendChild(text);
     row.appendChild(meta);
+    row.appendChild(actions);
     box.appendChild(row);
   });
 
   renderRail();
+}
+
+/* The small text buttons that sit under a note or a Living item. */
+function noteButton(label, danger, go) {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.className = danger ? "note-back danger" : "note-back";
+  node.textContent = label;
+  node.addEventListener("click", go);
+  return node;
+}
+
+/* Deleting is the one thing about a note that cannot be undone, so it asks first
+   and shows which note. confirm() renders the text as plain text — no markup. */
+function deleteNote(note, after) {
+  const preview = note.text.length > 80 ? note.text.slice(0, 77) + "..." : note.text;
+  if (!window.confirm("Delete this note? This can't be undone.\n\n" + preview)) return;
+  Rooms.removeNote(state.notes, note.id);
+  save();
+  after();
 }
 
 /* Written once, reused by every room: a room screen only has to contain
@@ -1927,23 +2099,251 @@ function renderRoomNotes(roomId) {
     meta.className = "note-meta";
     meta.textContent = note.promoted ? note.promoted.slice(0, 10) : "";
 
-    const back = document.createElement("button");
-    back.type = "button";
-    back.className = "note-back";
-    back.textContent = "Back to Notes";
-    back.addEventListener("click", function () {
+    const actions = document.createElement("div");
+    actions.className = "note-actions";
+    actions.appendChild(noteButton("Back to Notes", false, function () {
       Rooms.sendBack(state.notes, note.id);
       save();
       renderRoomNotes(roomId);
-    });
+    }));
+    actions.appendChild(noteButton("Delete", true, function () {
+      deleteNote(note, function () { renderRoomNotes(roomId); });
+    }));
 
     row.appendChild(text);
     row.appendChild(meta);
-    row.appendChild(back);
+    row.appendChild(actions);
     box.appendChild(row);
   });
 
   renderRail();
+}
+
+/* ---------- today ---------- */
+
+/* Today is assembled, not written. Every live room that registers a card in
+   ROOM_VIEWS gets one here, in ROOMS table order, and Notes adds its own last. A
+   room built next year appears on Today by registering a card — this function
+   never changes. Rooms that are planned but not built are named at the bottom,
+   so the shape of the whole app is visible from its front door. */
+function renderToday() {
+  const now = today();
+  el("today-date").textContent = DAYS[now.getDay()] + ", " + MONTHS[now.getMonth()] + " " + now.getDate();
+
+  const box = el("today-cards");
+  box.innerHTML = "";
+
+  Rooms.liveRooms().forEach(function (room) {
+    const view = ROOM_VIEWS[room.id];
+    if (!view || !view.card) return;
+    box.appendChild(todayCard(room.icon, room.label, room.tint, view.card(), screenFor(room.id)));
+  });
+
+  box.appendChild(todayCard("📥", "Notes", "#b05a4a", notesCard(), "notes-screen"));
+
+  const planned = Rooms.ROOMS
+    .filter(function (r) { return !r.live; })
+    .map(function (r) { return r.label; });
+  el("today-soon").hidden = planned.length === 0;
+  el("today-soon-text").textContent = listPhrase(planned) +
+    (planned.length === 1 ? " is" : " are") + " planned. Each gets its own card here when it's built.";
+
+  renderRail();
+}
+
+function listPhrase(words) {
+  if (words.length <= 1) return words.join("");
+  return words.slice(0, -1).join(", ") + " and " + words[words.length - 1];
+}
+
+/* A whole card is one button: the room's most useful line right now, and a tap
+   takes you into the room. Every string goes in through textContent — a Living
+   title is typed by hand. */
+function todayCard(icon, label, tint, content, screenId) {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.className = "today-card";
+  node.style.setProperty("--tint", tint);
+
+  const iconEl = document.createElement("span");
+  iconEl.className = "today-icon";
+  iconEl.setAttribute("aria-hidden", "true");
+  iconEl.textContent = icon;
+
+  const body = document.createElement("span");
+  body.className = "today-body";
+
+  const labelEl = document.createElement("span");
+  labelEl.className = "today-label";
+  labelEl.textContent = label;
+
+  const headline = document.createElement("span");
+  headline.className = "today-headline";
+  headline.textContent = content.headline;
+
+  const detail = document.createElement("span");
+  detail.className = "today-detail";
+  detail.textContent = content.detail;
+
+  const chev = document.createElement("span");
+  chev.className = "today-chev";
+  chev.setAttribute("aria-hidden", "true");
+  chev.textContent = "›";
+
+  body.appendChild(labelEl);
+  body.appendChild(headline);
+  body.appendChild(detail);
+  node.appendChild(iconEl);
+  node.appendChild(body);
+  node.appendChild(chev);
+
+  node.addEventListener("click", function () { showScreen(screenId); });
+  return node;
+}
+
+function fitnessCard() {
+  if (!started()) return { headline: "Starts Sunday", detail: "Week 1 of the plan" };
+  const week = currentWeek();
+  return {
+    headline: fitnessLine(),
+    detail: "Week " + week + " · " + doneCount(week) + " of " + requiredRuns(week).length + " runs done"
+  };
+}
+
+/* Leads with the total because consolidation is the point of the room. The
+   detail is the room left under the first annual target, when one is set —
+   that is the number worth acting on. */
+function financeCard() {
+  const f = state.finance;
+  if (!f.locations.length) return { headline: "Nothing yet", detail: "Add your accounts in Finance" };
+
+  const targeted = f.locations.filter(function (l) { return l.target; })[0];
+  let detail = financeLine();
+  if (targeted) {
+    const used = Rooms.contributedInYear(f, targeted.id, today().getFullYear());
+    detail = targeted.label + ": " + Rooms.formatMoney(Math.max(0, targeted.target - used)) + " of room left this year";
+  }
+  return { headline: Rooms.formatMoney(Rooms.totalValue(f)), detail: detail };
+}
+
+function livingCard() {
+  const next = Rooms.upcoming(state.living, ymd(today()))[0];
+  if (next) return { headline: next.title, detail: livingWhen(next.date) + " · " + next.kind };
+
+  const ideas = Rooms.someday(state.living).length;
+  return {
+    headline: "Nothing planned",
+    detail: ideas ? ideas + (ideas === 1 ? " idea" : " ideas") + " saved for someday" : "Add the next good thing"
+  };
+}
+
+function notesCard() {
+  const waiting = Rooms.untriaged(state.notes).length;
+  const held = Rooms.inbox(state.notes).length;
+  return {
+    headline: waiting ? waiting + " to triage" : "All sorted",
+    detail: held ? held + (held === 1 ? " note" : " notes") + " in Notes" : "Nothing waiting"
+  };
+}
+
+/* ---------- living ---------- */
+
+function livingLine() {
+  const n = Rooms.upcoming(state.living, ymd(today())).length;
+  return n ? n + " planned" : "Nothing planned";
+}
+
+/* Close dates in words, further ones as a date. Worked out from calendar days
+   rather than hours, so "Tomorrow" means tomorrow even late at night. */
+function livingWhen(dateYmd) {
+  const d = fromYmd(dateYmd);
+  const days = Math.round((d - fromYmd(ymd(today()))) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  if (days > 1 && days < 7) return "In " + days + " days";
+  return DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " + d.getDate();
+}
+
+function renderLiving() {
+  const status = el("living-status");
+  if (status) status.textContent = livingLine();
+
+  const todayYmd = ymd(today());
+  [
+    ["lv-upcoming", Rooms.upcoming(state.living, todayYmd)],
+    ["lv-someday", Rooms.someday(state.living)],
+    ["lv-past", Rooms.pastItems(state.living, todayYmd)]
+  ].forEach(function (pair) {
+    const box = el(pair[0] + "-items");
+    el(pair[0]).hidden = pair[1].length === 0;
+    box.innerHTML = "";
+    pair[1].forEach(function (item) { box.appendChild(livingRow(item)); });
+  });
+
+  el("lv-empty").hidden = state.living.items.length > 0;
+}
+
+function livingRow(item) {
+  const row = document.createElement("div");
+  row.className = item.done ? "note-row lv-done" : "note-row";
+
+  const text = document.createElement("p");
+  text.className = "note-text";
+  text.textContent = item.title;
+
+  const meta = document.createElement("p");
+  meta.className = "note-meta";
+  meta.textContent = item.kind + (item.date ? " · " + livingWhen(item.date) : "");
+
+  const actions = document.createElement("div");
+  actions.className = "note-actions";
+  actions.appendChild(noteButton(item.done ? "Not done yet" : "Mark done", false, function () {
+    Rooms.setDone(state.living, item.id, !item.done);
+    save();
+    renderLiving();
+  }));
+  actions.appendChild(noteButton("Delete", true, function () {
+    if (!window.confirm("Delete " + item.title + "? This can't be undone.")) return;
+    Rooms.removeLivingItem(state.living, item.id);
+    save();
+    renderLiving();
+  }));
+
+  row.appendChild(text);
+  row.appendChild(meta);
+  row.appendChild(actions);
+  return row;
+}
+
+el("lv-add-save").addEventListener("click", function () {
+  const titleBox = el("lv-add-title");
+  const msg = el("lv-add-msg");
+  const title = titleBox.value.trim();
+  if (!title) {
+    msg.textContent = "Give it a name first.";
+    msg.hidden = false;
+    return;
+  }
+  msg.hidden = true;
+  state.living.items.unshift(Rooms.makeLivingItem(title, {
+    kind: el("lv-add-kind").value,
+    date: el("lv-add-date").value || null
+  }, new Date().toISOString()));
+  titleBox.value = "";
+  el("lv-add-date").value = "";
+  titleBox.blur();
+  save();
+  renderLiving();
+});
+
+/* The kinds come from rooms.js so the list and its validation cannot drift. */
+if (ROOMS_READY) {
+  Rooms.LIVING_KINDS.forEach(function (kind) {
+    const opt = document.createElement("option");
+    opt.value = kind;
+    opt.textContent = kind;
+    el("lv-add-kind").appendChild(opt);
+  });
 }
 
 /* ---------- finance ---------- */
@@ -3306,7 +3706,7 @@ closeWeeks();
 pruneTasks();
 
 if (ROOMS_READY) {
-  showScreen("fitness-screen");
+  showScreen("today-screen");
 } else {
   bootWithoutRooms();
 }
