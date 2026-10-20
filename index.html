@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beez">
-<meta name="build" content="33">
+<meta name="build" content="34">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Beez</title>
@@ -1317,6 +1317,20 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
     </div>
   </div>
   <div class="tiles" id="rooms-tiles"></div>
+
+  <!-- Backups. Restore exists so the home-screen icon can be re-added (which
+       empties the app) and so any export is a real backup, not just a file. -->
+  <section class="list" id="data-panel" aria-labelledby="data-h">
+    <h3 id="data-h">Your data</h3>
+    <p class="hint">Everything lives on this phone. A backup is one file you keep; restoring one replaces what's here, after you confirm.</p>
+    <div class="ipanel-quiet">
+      <button type="button" class="pbtn" id="data-backup">Back up</button>
+      <button type="button" class="pbtn" id="data-restore">Restore a backup</button>
+    </div>
+    <button type="button" class="pdanger" id="data-undo" hidden>Put back what was here before the last restore</button>
+    <input type="file" id="data-file" hidden>
+    <p class="fin-msg" id="data-msg" hidden></p>
+  </section>
 </main>
 
 <main class="screen" id="fitness-screen">
@@ -1798,7 +1812,7 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 
 <!-- The ?v= is the build number: a new page always asks for its own rooms.js,
      so an old saved copy can never be served alongside it. -->
-<script src="./rooms.js?v=33"></script>
+<script src="./rooms.js?v=34"></script>
 <script>
 "use strict";
 
@@ -1878,7 +1892,13 @@ function load() {
   } catch (e) {
     saved = {};
   }
+  return buildState(saved);
+}
 
+/* Every saved shape — this phone's own, or a backup file being restored — goes
+   through the same defensive rebuild, field by field, so a file from an older
+   build or with a damaged section still comes in clean. */
+function buildState(saved) {
   return {
     startDate: saved.startDate || firstStart(),
     weekShift: saved.weekShift || 0,
@@ -3024,6 +3044,7 @@ function renderRooms() {
       box.appendChild(node);
     }
   });
+  renderDataPanel();
   renderRail();
 }
 
@@ -3070,6 +3091,132 @@ function shortWhen(dateYmd) {
   if (n === 1) return "Yesterday";
   const d = fromYmd(dateYmd);
   return DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " + d.getDate();
+}
+
+
+/* ---------- backup and restore ---------- */
+
+const BEFORE_RESTORE_KEY = "the-build-before-restore";
+
+function dataMsg(text) {
+  const m = el("data-msg");
+  m.textContent = text || "";
+  m.hidden = !text;
+}
+
+/* What a state holds, in a few words, for the confirmation. */
+function stateSummary(st) {
+  const runs = Object.keys(st.completed || {}).filter(function (id) { return /-(easy|mod|long|fri)$/.test(id); }).length;
+  const parts = [
+    runs + (runs === 1 ? " run" : " runs"),
+    (st.notes || []).length + ((st.notes || []).length === 1 ? " note" : " notes")
+  ];
+  if (st.finance && st.finance.locations) parts.push(st.finance.locations.length + (st.finance.locations.length === 1 ? " money location" : " money locations"));
+  if (st.living && st.living.items) parts.push(st.living.items.length + (st.living.items.length === 1 ? " Living item" : " Living items"));
+  if (st.maintenance && st.maintenance.tasks) parts.push(st.maintenance.tasks.length + (st.maintenance.tasks.length === 1 ? " upkeep job" : " upkeep jobs"));
+  return parts.join(", ");
+}
+
+/* A backup has to look like Beez's own saved data: an object carrying at least
+   one of the keys the app writes. Anything else is refused before it can touch
+   what is on the phone. */
+function looksLikeBackup(obj) {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+  return ["startDate", "completed", "logs", "notes", "finance", "living", "maintenance", "weekHistory"]
+    .some(function (k) { return Object.prototype.hasOwnProperty.call(obj, k); });
+}
+
+function backupDate(file) {
+  const m = /(\d{4}-\d{2}-\d{2})/.exec(file.name || "");
+  if (m) return shortWhen(m[1]);
+  return file.lastModified ? shortWhen(ymd(new Date(file.lastModified))) : "an unknown date";
+}
+
+el("data-backup").addEventListener("click", function () { el("export").click(); });
+el("data-restore").addEventListener("click", function () {
+  dataMsg("");
+  el("data-file").value = "";
+  el("data-file").click();
+});
+
+el("data-file").addEventListener("change", function () {
+  const file = this.files && this.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    dataMsg("That file is too big to be a Beez backup. Nothing was changed.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = function () { dataMsg("Couldn't read that file. Nothing was changed."); };
+  reader.onload = function () {
+    let raw;
+    try { raw = JSON.parse(String(reader.result)); } catch (e) { raw = null; }
+    if (!looksLikeBackup(raw)) {
+      dataMsg("That isn't a Beez backup. Pick the file Export made (its name starts with beez-, higs- or the-build). Nothing was changed.");
+      return;
+    }
+    const incoming = buildState(raw);
+    const when = backupDate(file);
+    openPanel({
+      icon: "rooms", tint: "#d2a13c", title: "Restore this backup?",
+      meta: "Backup from " + when,
+      facts: [
+        { icon: "check", text: "The backup: " + stateSummary(incoming) },
+        { icon: "close", text: "Replaces what's here now: " + stateSummary(state) }
+      ],
+      note: "What's on this phone now is kept aside, so you can put it back from Rooms → Your data if this was the wrong file.",
+      primary: { label: "Replace with the backup", go: function () { restoreState(incoming); } },
+      quiet: [{ label: "Cancel", go: function () { dataMsg("Nothing was changed."); } }]
+    }, el("data-restore"));
+  };
+  reader.readAsText(file);
+});
+
+/* Keep the current data aside, write the backup in its place, and reopen. */
+function restoreState(incoming) {
+  try {
+    localStorage.setItem(BEFORE_RESTORE_KEY, JSON.stringify(state));
+  } catch (e) {
+    /* No room to keep a copy aside: refuse rather than replace with no way back. */
+    dataMsg("The phone has no room to keep a copy of what's here, so nothing was replaced.");
+    return;
+  }
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(incoming));
+  } catch (e) {
+    dataMsg("Couldn't save the backup on this phone. Nothing was replaced.");
+    return;
+  }
+  try { sessionStorage.setItem("beez-restored", "1"); } catch (e) { /* ignore */ }
+  location.reload();
+}
+
+el("data-undo").addEventListener("click", function () {
+  let before = null;
+  try { before = JSON.parse(localStorage.getItem(BEFORE_RESTORE_KEY)); } catch (e) { before = null; }
+  if (!looksLikeBackup(before)) { dataMsg("There's nothing to put back."); el("data-undo").hidden = true; return; }
+  const previous = buildState(before);
+  openPanel({
+    icon: "rooms", tint: "#d2a13c", title: "Put back the earlier data?",
+    facts: [
+      { icon: "check", text: "Earlier data: " + stateSummary(previous) },
+      { icon: "close", text: "Replaces what's here now: " + stateSummary(state) }
+    ],
+    primary: { label: "Put it back", go: function () {
+      try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(previous));
+        localStorage.removeItem(BEFORE_RESTORE_KEY);
+      } catch (e) { dataMsg("Couldn't save on this phone. Nothing was changed."); return; }
+      location.reload();
+    } },
+    quiet: [{ label: "Cancel", go: function () {} }]
+  }, el("data-undo"));
+});
+
+function renderDataPanel() {
+  let has = false;
+  try { has = Boolean(localStorage.getItem(BEFORE_RESTORE_KEY)); } catch (e) { has = false; }
+  el("data-undo").hidden = !has;
 }
 
 /* ---------- capture ---------- */
@@ -4868,6 +5015,12 @@ closeWeeks();
 pruneTasks();
 
 decorateRoomHeads();
+try {
+  if (sessionStorage.getItem("beez-restored")) {
+    sessionStorage.removeItem("beez-restored");
+    setTimeout(function () { toast("Backup restored: " + stateSummary(state)); }, 300);
+  }
+} catch (e) { /* ignore */ }
 
 if (ROOMS_READY) {
   showScreen("today-screen");
