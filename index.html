@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beez">
-<meta name="build" content="31">
+<meta name="build" content="32">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Beez</title>
@@ -1795,7 +1795,9 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
   </div>
 </div>
 
-<script src="./rooms.js"></script>
+<!-- The ?v= is the build number: a new page always asks for its own rooms.js,
+     so an old saved copy can never be served alongside it. -->
+<script src="./rooms.js?v=32"></script>
 <script>
 "use strict";
 
@@ -1840,7 +1842,26 @@ const LATE_END = 3 * 60;           // 3:00 AM — the evening runs through midni
    its Export button whatever happened to the rooms table. Everything that
    touches Rooms is gated on this; when it is false the app falls back to the
    tracker alone, which is exactly what it was before rooms existed. */
-const ROOMS_READY = Boolean(window.Rooms);
+/* Build 32: a rooms.js from a different build counts as missing. Build 31 went
+   out with the phone still holding build 26's rooms.js in its offline copy; the
+   new page called functions that copy did not have and stopped before drawing
+   anything. Now a mismatch clears the offline copy and reloads once (saved data
+   lives elsewhere and is never touched), and if it is still wrong the app opens
+   as the tracker alone rather than blank. */
+const PAGE_BUILD = Number(document.querySelector('meta[name="build"]').content);
+const ROOMS_MATCH = Boolean(window.Rooms) && window.Rooms.BUILD === PAGE_BUILD;
+if (window.Rooms && !ROOMS_MATCH) {
+  let tried = false;
+  try { tried = sessionStorage.getItem("beez-reloaded") === String(PAGE_BUILD); } catch (e) { tried = true; }
+  if (!tried) {
+    try { sessionStorage.setItem("beez-reloaded", String(PAGE_BUILD)); } catch (e) { /* ignore */ }
+    const wipe = window.caches ? caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+    }) : Promise.resolve();
+    wipe.catch(function () {}).then(function () { location.reload(); });
+  }
+}
+const ROOMS_READY = ROOMS_MATCH;
 
 /* ---------- state ---------- */
 

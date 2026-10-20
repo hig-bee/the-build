@@ -1,14 +1,17 @@
 /* Keeps a copy of the app on the phone so it opens with no signal.
    Bump VERSION whenever the app files change. */
 
-const VERSION = "the-build-v31";
+const VERSION = "the-build-v32";
 const PAGE = "./index.html";
 
 /* The page boots without rooms.js, but with no rooms table there is no Home, no
    Notes and no triage — half the app. A saved copy missing it would still call
    itself a complete offline copy, and the phone would only find out in a
    driveway with no signal, so these two stand or fall together. */
-const CRITICAL = [PAGE, "./rooms.js"];
+/* rooms.js is asked for by build number (index.html loads ./rooms.js?v=<build>),
+   so the copy saved here always matches the page saved with it. */
+const BUILD = VERSION.split("-v").pop();
+const CRITICAL = [PAGE, "./rooms.js?v=" + BUILD];
 
 /* The icons, the manifest and the directory alias are decoration: without any of
    them the tracker still opens and still logs. Each is saved on its own and its
@@ -21,11 +24,14 @@ const NETWORK_WAIT = 2500;
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(VERSION).then(function (cache) {
+      /* cache: "reload" skips the browser's own short-term copy, which on
+         GitHub Pages can be up to ten minutes old — saving that would undo the
+         update this install exists for. */
       return Promise.all(CRITICAL.map(function (url) {
-        return cache.add(url);
+        return cache.add(new Request(url, { cache: "reload" }));
       })).then(function () {
         return Promise.all(OPTIONAL.map(function (url) {
-          return cache.add(url).catch(function () { return null; });
+          return cache.add(new Request(url, { cache: "reload" })).catch(function () { return null; });
         }));
       });
     }).then(function () { return self.skipWaiting(); })
@@ -54,7 +60,10 @@ async function respond(request) {
      get the current version; without it, or on a bad one, the saved copy takes over
      after a couple of seconds. Cache-first here meant updates could never land. */
   if (request.mode === "navigate") {
-    const live = await raceTimeout(fetch(request), NETWORK_WAIT);
+    /* "no-cache" asks GitHub whether the page changed instead of reusing the
+       browser's short-term copy, which can otherwise hold an old build for up to
+       ten minutes after a publish. */
+    const live = await raceTimeout(fetch(request.url, { cache: "no-cache", credentials: "same-origin" }), NETWORK_WAIT);
     if (live && live.status === 200) {
       cache.put(PAGE, live.clone());
       return live;
