@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beez">
-<meta name="build" content="35">
+<meta name="build" content="36">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Beez</title>
@@ -1348,6 +1348,34 @@ html, body { font-size: 16px; }
 .ipanel-head h2 { font-size: 21px; }
 .ipanel-note, .ipanel-fact { font-size: 14px; }
 .pbtn { min-height: 44px; font-size: 14px; }
+
+/* Build 36, at Ryan's request: a quieter attribution, and a shorter bottom bar
+   and capture bar so Today fits on the iPhone without scrolling. */
+.today-quote .who { margin-top: 3px; font-size: 9.5px; letter-spacing: .1em; opacity: .85; }
+.rail { padding-top: 2px; padding-bottom: calc(2px + env(safe-area-inset-bottom)); }
+.rail-slot { height: 40px; font-size: 10px; gap: 1px; }
+.rail-slot svg { width: 19px; height: 19px; }
+.rail-count { top: 0; min-width: 15px; height: 15px; line-height: 15px; font-size: 10px; }
+.capture { min-height: 40px; padding: 0 4px 0 16px; border-radius: 20px; bottom: calc(48px + env(safe-area-inset-bottom)); }
+.capture input { height: 36px; font-size: 16px; }
+.capture button { width: 32px; height: 32px; border-radius: 16px; }
+.capture button svg { width: 16px; height: 16px; }
+.panels { padding-bottom: calc(52px + env(safe-area-inset-bottom)); }
+.has-capture .panels { padding-bottom: calc(98px + env(safe-area-inset-bottom)); }
+.toast { bottom: calc(100px + env(safe-area-inset-bottom)); }
+#today-screen { gap: 10px; }
+#today-screen .tile { min-height: 98px; padding: 12px; gap: 5px; }
+#today-screen .tile.wide { padding: 12px 14px; }
+#today-screen .tile-ring, #today-screen .tile-ring svg { width: 50px; height: 50px; }
+#today-screen .triage-row { min-height: 44px; }
+#today-screen .day { padding: 5px 0 4px; }
+/* Today's half tiles: icon and label share the first line, so a tile is three
+   lines tall instead of four. */
+#today-screen .tile:not(.wide) { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 9px; row-gap: 4px; align-content: start; min-height: 0; }
+#today-screen .tile:not(.wide) > .chip, #today-screen .tile.later > .chips { grid-column: 1; grid-row: 1; }
+#today-screen .tile:not(.wide) > .tile-label { grid-column: 2; grid-row: 1; align-self: center; }
+#today-screen .tile:not(.wide) > .tile-headline, #today-screen .tile:not(.wide) > .tile-detail { grid-column: 1 / -1; }
+#today-screen .tile:not(.wide) > .tile-headline { margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -1881,7 +1909,7 @@ html, body { font-size: 16px; }
 
 <!-- The ?v= is the build number: a new page always asks for its own rooms.js,
      so an old saved copy can never be served alongside it. -->
-<script src="./rooms.js?v=35"></script>
+<script src="./rooms.js?v=36"></script>
 <script>
 "use strict";
 
