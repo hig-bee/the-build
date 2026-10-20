@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beez">
-<meta name="build" content="34">
+<meta name="build" content="35">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Beez</title>
@@ -1277,6 +1277,77 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 #open-triage { border: 0; border-left: 0; padding: 0 16px; font-weight: 500; }
 .room-head > .back { align-self: flex-start; }
 .wrow input:checked + .box, .check input:checked + .box { background: var(--tint, var(--accent)); border-color: var(--tint, var(--accent)); }
+
+/* ================= Compact pass, build 35 =================
+   Ryan asked for everything a little smaller so more fits on one screen.
+   Type, padding and gaps come down about 15%; every tap target stays at
+   least 44px. This block only overrides sizes set above. */
+html, body { font-size: 16px; }
+.screen { gap: 12px; padding-top: max(10px, env(safe-area-inset-top)); }
+
+.today-head { gap: 6px; padding-top: 4px; }
+.today-date { font-size: 28px; }
+.today-quote { font-size: 15.5px; line-height: 1.45; }
+.today-quote .who { margin-top: 4px; font-size: 11px; }
+.day { padding: 6px 0 5px; gap: 3px; }
+.day-num { font-size: 15px; }
+.triage-row { min-height: 46px; font-size: 15px; border-radius: 16px; }
+.triage-row .chip { width: 28px; height: 28px; }
+
+.tiles { gap: 10px; }
+.tile { min-height: 112px; padding: 13px; gap: 6px; border-radius: 20px; }
+.tile.wide { padding: 14px 16px; }
+.tile-headline { font-size: 17px; }
+.tile.wide .tile-headline { font-size: 19px; }
+.tile-label { font-size: 12px; }
+.tile-detail { font-size: 12.5px; }
+.tile .chip { width: 32px; height: 32px; border-radius: 10px; }
+.tile .chip svg { width: 18px; height: 18px; }
+.tile-ring, .tile-ring svg { width: 54px; height: 54px; }
+
+.chip { width: 34px; height: 34px; border-radius: 11px; }
+.chip svg { width: 18px; height: 18px; }
+.chip.lg { width: 38px; height: 38px; border-radius: 12px; }
+.chip.lg svg { width: 20px; height: 20px; }
+.room-head { gap: 4px; }
+.room-head h1, .room-head h2 { font-size: 25px; }
+.room-status { font-size: 13px; }
+
+.list, .tonight { padding: 10px 14px; border-radius: 20px; }
+.list h3, .tonight h3 { margin: 2px 0 4px; font-size: 11px; }
+.item { min-height: 56px; padding: 8px 0; gap: 10px; }
+.item-title { font-size: 15px; }
+.item-meta { font-size: 12.5px; }
+.pill { padding: 3px 9px; font-size: 11.5px; }
+
+.card { padding: 14px; border-radius: 20px; }
+.card h2 { font-size: 21px; }
+.guidance { margin-top: 6px; font-size: 14px; }
+.done { min-height: 48px; font-size: 17px; margin-top: 10px; }
+.done-row { margin-top: 10px; }
+.log { margin-top: 10px; }
+.wk-line { font-size: 14px; min-height: 20px; }
+.check .label { font-size: 15px; }
+.ring { width: 46px; height: 46px; }
+.ring-text strong { font-size: 16px; }
+.ring-text span { font-size: 13px; }
+.head h1 { font-size: 17px; }
+.fin-loc { padding: 9px 0; }
+.fin-loc-value { font-size: 18px; }
+.hint { font-size: 14px; }
+
+.rail-slot { height: 48px; font-size: 10.5px; gap: 2px; }
+.rail-slot svg { width: 21px; height: 21px; }
+.panels { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+.has-capture .panels { padding-bottom: calc(136px + env(safe-area-inset-bottom)); }
+.capture { min-height: 48px; bottom: calc(64px + env(safe-area-inset-bottom)); }
+.capture button { width: 38px; height: 38px; }
+.toast { bottom: calc(124px + env(safe-area-inset-bottom)); }
+
+.ipanel { gap: 12px; }
+.ipanel-head h2 { font-size: 21px; }
+.ipanel-note, .ipanel-fact { font-size: 14px; }
+.pbtn { min-height: 44px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -1640,10 +1711,8 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 
   <section class="list" id="mt-cal" aria-labelledby="mt-cal-h" hidden>
     <h3 id="mt-cal-h">Your calendar</h3>
-    <p class="mt-how">Beez never alerts you. Your phone's calendar can: this puts every job
-      on it as a repeating 7 PM event with its own alert. Open a job to add just that one.
-      The calendar keeps its own rhythm after that — if you do a job early or late, Beez
-      still has the right next date.</p>
+    <p class="mt-how">Beez never alerts you. This adds every job to your phone's calendar as a
+      repeating 7 PM event with its own alert; open a job to add just that one.</p>
     <button type="button" class="done" id="mt-cal-all">Put all jobs on my calendar</button>
     <p class="fin-msg" id="mt-cal-msg" hidden></p>
   </section>
@@ -1812,7 +1881,7 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 
 <!-- The ?v= is the build number: a new page always asks for its own rooms.js,
      so an old saved copy can never be served alongside it. -->
-<script src="./rooms.js?v=34"></script>
+<script src="./rooms.js?v=35"></script>
 <script>
 "use strict";
 
