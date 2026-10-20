@@ -14,7 +14,7 @@
   /* The build this file belongs to. index.html refuses to run against a
      rooms.js from another build (an old saved copy on the phone) — the two must
      always move together, and publish.ps1 checks they do. */
-  const BUILD = 36;
+  const BUILD = 38;
 
   /* One row per room. The home tiles, the triage buttons and the word matcher all
      read this table, so adding Finance later means adding a row and a screen —

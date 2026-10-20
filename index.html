@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beez">
-<meta name="build" content="36">
+<meta name="build" content="38">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Beez</title>
@@ -1376,6 +1376,10 @@ html, body { font-size: 16px; }
 #today-screen .tile:not(.wide) > .tile-label { grid-column: 2; grid-row: 1; align-self: center; }
 #today-screen .tile:not(.wide) > .tile-headline, #today-screen .tile:not(.wide) > .tile-detail { grid-column: 1 / -1; }
 #today-screen .tile:not(.wide) > .tile-headline { margin-top: 4px; }
+/* Build 37: six equal tiles on Today; Fitness keeps its week count in the detail. */
+#today-screen .tile.later .tile-label { color: var(--tint-light); opacity: .75; }
+#today-screen .tile.later .tile-headline { color: var(--dim); }
+#today-screen .tiles .tile { min-height: 124px; }
 </style>
 </head>
 <body>
@@ -1909,7 +1913,7 @@ html, body { font-size: 16px; }
 
 <!-- The ?v= is the build number: a new page always asks for its own rooms.js,
      so an old saved copy can never be served alongside it. -->
-<script src="./rooms.js?v=36"></script>
+<script src="./rooms.js?v=38"></script>
 <script>
 "use strict";
 
@@ -2935,10 +2939,13 @@ function renderToday() {
   Rooms.liveRooms().forEach(function (room) {
     const view = ROOM_VIEWS[room.id];
     if (!view || !view.card) return;
-    box.appendChild(roomTile(room, view.card(), room.id === "fitness"));
+    box.appendChild(roomTile(room, view.card(), false));
   });
-  const later = laterTile();
-  if (later) box.appendChild(later);
+  /* Build 37: every room is the same square, and each planned room has its own
+     "To come" tile, so Today already shows the whole house. */
+  Rooms.ROOMS.filter(function (r) { return !r.live; }).forEach(function (room) {
+    box.appendChild(laterTile(room));
+  });
   /* An odd tile out stretches across, so nothing sits alone in a half row. */
   const halves = box.querySelectorAll(".tile:not(.wide)");
   if (halves.length % 2 === 1) halves[halves.length - 1].classList.add("span2");
@@ -3091,23 +3098,19 @@ function weekRing() {
   return wrap;
 }
 
-/* Planned rooms share one quiet tile: the shape of the whole app stays visible. */
-function laterTile() {
-  const planned = Rooms.ROOMS.filter(function (r) { return !r.live; });
-  if (!planned.length) return null;
+/* A planned room: its own quiet tile, marked "To come". Not a button — there is
+   nothing behind it yet. */
+function laterTile(room) {
   const node = document.createElement("div");
   node.className = "tile later";
-  const chips = document.createElement("span");
-  chips.className = "chips";
-  planned.slice(0, 4).forEach(function (r) { chips.appendChild(chip(r.id, r.tint, "soft")); });
+  setTint(node, room.tint);
+  node.appendChild(chip(room.id, room.tint, "soft"));
   const label = document.createElement("span");
   label.className = "tile-label";
-  label.style.color = "var(--dim)";
-  label.textContent = planned.map(function (r) { return r.label; }).join(" · ");
+  label.textContent = room.label;
   const headline = document.createElement("span");
   headline.className = "tile-headline";
-  headline.textContent = "Coming later";
-  node.appendChild(chips);
+  headline.textContent = "To come";
   node.appendChild(label);
   node.appendChild(headline);
   return node;
@@ -3118,7 +3121,7 @@ function renderRooms() {
   const box = el("rooms-tiles");
   box.innerHTML = "";
   const live = Rooms.liveRooms();
-  el("rooms-line").textContent = live.length + " open · " + (Rooms.ROOMS.length - live.length) + " coming later";
+  el("rooms-line").textContent = live.length + " open · " + (Rooms.ROOMS.length - live.length) + " to come";
   Rooms.ROOMS.forEach(function (room) {
     const view = ROOM_VIEWS[room.id];
     if (room.live && view) {
@@ -3135,7 +3138,7 @@ function renderRooms() {
       h.textContent = room.label;
       const d = document.createElement("span");
       d.className = "tile-detail";
-      d.textContent = "Coming later";
+      d.textContent = "To come";
       node.appendChild(h);
       node.appendChild(d);
       box.appendChild(node);
@@ -3342,7 +3345,7 @@ function fitnessCard() {
   const week = currentWeek();
   return {
     headline: fitnessLine(),
-    detail: "Week " + week + " · " + doneCount(week) + " of " + requiredRuns(week).length + " runs done"
+    detail: "Week " + week + " · " + doneCount(week) + " of " + requiredRuns(week).length + " runs"
   };
 }
 
