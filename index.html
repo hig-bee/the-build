@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Beez">
-<meta name="build" content="32">
+<meta name="build" content="33">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
 <title>Beez</title>
@@ -1153,6 +1153,10 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 .pdanger { align-self: center; min-height: var(--tap); padding: 0 16px; border: 0; background: none; color: var(--rose); font: inherit; font-size: 15px; cursor: pointer; }
 
 /* ---- Today ---- */
+.today-head { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+.today-date { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1.1; text-wrap: balance; }
+.today-quote { margin: 0; font-family: var(--serif); font-style: italic; font-size: 17px; line-height: 1.5; color: #ddd6c4; max-width: 34em; }
+.today-quote .who { display: block; margin-top: 6px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-style: normal; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--focus); }
 .greet { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-top: 6px; }
 .greet > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .greet-date { margin: 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--focus); }
@@ -1284,14 +1288,12 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 <!-- Today: the front door. Its cards are assembled from the rooms at render
      time, so a room built later shows up here without this markup changing. -->
 <main class="screen" id="today-screen" hidden>
-  <div class="greet">
-    <div>
-      <p class="greet-date" id="today-date"></p>
-      <h1 id="today-greeting">Today</h1>
-      <p class="greet-line" id="today-line"></p>
-    </div>
-    <span class="mark" aria-hidden="true">B</span>
-  </div>
+  <!-- The date, and the day's line from the Stoics (moved here from the evening
+       summary in build 33). Same line all day; it changes at midnight. -->
+  <header class="today-head">
+    <h1 class="today-date" id="today-date">Today</h1>
+    <p class="today-quote" id="today-quote"></p>
+  </header>
 
   <!-- This week, Sunday to Saturday. A dot under a day means a room has
        something on it; each room adds its own through ROOM_VIEWS[id].dates. -->
@@ -1779,7 +1781,6 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
     </div>
     <div class="summary" id="summary-body"></div>
     <div class="wtd" id="summary-week"></div>
-    <p class="quote" id="summary-quote"></p>
   </div>
 </div>
 
@@ -1797,7 +1798,7 @@ body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, 
 
 <!-- The ?v= is the build number: a new page always asks for its own rooms.js,
      so an old saved copy can never be served alongside it. -->
-<script src="./rooms.js?v=32"></script>
+<script src="./rooms.js?v=33"></script>
 <script>
 "use strict";
 
@@ -2456,9 +2457,6 @@ function toast(text) {
   toast.timer = setTimeout(function () { t.hidden = true; }, 3600);
 }
 
-/* Whose app this is: the greeting on Today uses it. */
-const OWNER_NAME = "Ryan";
-
 /* The session whose numbers are open for correction, if any. */
 let editingId = null;
 
@@ -2802,10 +2800,14 @@ function renderRoomNotes(roomId) {
    so the shape of the whole app is visible from its front door. */
 function renderToday() {
   const now = today();
-  const hour = new Date().getHours();
   el("today-date").textContent = DAYS[now.getDay()] + ", " + MONTHS[now.getMonth()] + " " + now.getDate();
-  el("today-greeting").textContent = (hour < 12 ? "Morning" : hour < 17 ? "Afternoon" : "Evening") + ", " + OWNER_NAME;
-  el("today-line").textContent = weekLine();
+  const line = dailyLine();
+  const quote = el("today-quote");
+  quote.textContent = line.t;
+  const who = document.createElement("span");
+  who.className = "who";
+  who.textContent = line.a;
+  quote.appendChild(who);
 
   renderDays();
 
@@ -2843,22 +2845,6 @@ function fillTriageRow(node, waiting) {
   right.appendChild(svgIcon("chev", 16, 2));
   node.appendChild(left);
   node.appendChild(right);
-}
-
-/* The line under the greeting: what this week holds, in a few words. */
-function weekLine() {
-  const t = ymd(today());
-  const end = Rooms.addDaysYmd(t, 6);
-  const jobs = Rooms.dueWithin(state.maintenance, t, 6).length;
-  const plans = Rooms.upcoming(state.living, t).filter(function (it) { return it.date <= end; }).length;
-  const n = jobs + plans;
-  const parts = [n ? n + (n === 1 ? " thing" : " things") + " this week" : "A clear week"];
-  if (started()) {
-    const week = currentWeek();
-    const long = sessions(week).find(function (x) { return x.day === 6; });
-    if (long && !isDone(long.id)) parts.push((week === TOTAL_WEEKS ? "race day" : "long run") + " Saturday");
-  }
-  return parts.join(" · ");
 }
 
 /* Sunday to Saturday of this week, a dot for each room with something that day. */
@@ -4814,14 +4800,6 @@ function openSummary() {
   });
 
   drawWeekToDate();
-
-  const line = dailyLine();
-  const quote = el("summary-quote");
-  quote.textContent = line.t;
-  const who = document.createElement("span");
-  who.className = "who";
-  who.textContent = line.a;
-  quote.appendChild(who);
 
   openSheet("summary-sheet", el("open-summary"));
 }
