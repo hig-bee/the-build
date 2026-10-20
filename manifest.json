@@ -1,6 +1,6 @@
 {
-  "name": "Higs",
-  "short_name": "Higs",
+  "name": "Beez",
+  "short_name": "Beez",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -4,25 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0f1411">
+<meta name="theme-color" content="#090c0a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Higs">
-<meta name="build" content="26">
+<meta name="apple-mobile-web-app-title" content="Beez">
+<meta name="build" content="31">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-180.png">
-<title>Higs</title>
+<title>Beez</title>
 <style>
 :root {
-  --bg: #0f1411;
-  --surface: #1a2119;
-  --line: #394433;
+  /* Refresh, build 31: a deeper ground and lifted surfaces, so layers separate
+     by lightness rather than by outlines. */
+  --bg: #090c0a;
+  --surface: #1e281d;      /* panels and groups */
+  --raised: #263224;       /* things on a panel, and the bars */
+  --line: rgba(240, 233, 216, 0.11);
+  --fill: rgba(240, 233, 216, 0.08);   /* quiet buttons, inputs */
   --text: #f0e9d8;
-  --dim: #a9a28e;
+  --dim: #b8b19c;
   --accent: #8e2f3a;
   --focus: #d2a13c;
-  --radius: 16px;
+  --ok: #b9d3aa;
+  --rose: #e09aa3;
+  --radius: 22px;
   --tap: 44px;
+  --serif: Georgia, "Times New Roman", serif;
 }
 
 * { box-sizing: border-box; }
@@ -39,7 +46,7 @@ html, body {
 /* Fixed so the gradient stays anchored to the viewport rather than repeating
    as the long Fitness panel scrolls underneath it. */
 body {
-  background: radial-gradient(900px 420px at 50% -12%, #243522 0%, #0f1411 62%) fixed;
+  background: radial-gradient(900px 420px at 50% -12%, #1b2a19 0%, #090c0a 64%) fixed;
 }
 
 :focus-visible {
@@ -780,6 +787,7 @@ body {
 
 /* Living */
 .lv-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.run-as { margin-top: 14px; }
 .field select {
   min-height: var(--tap);
   width: 100%;
@@ -791,6 +799,10 @@ body {
   padding: 0 10px;
   font-family: inherit;
 }
+/* Maintenance. A job that has come due gets brass, not red: it is a status,
+   never a scolding. */
+.mt-due .note-meta { color: var(--focus); }
+.mt-how { margin: 4px 0 6px; color: var(--dim); font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
 .lv-done .note-text { color: var(--dim); text-decoration: line-through; text-decoration-color: var(--line); }
 
 /* A status, not a notification: quiet numeral, no dot, no motion. */
@@ -869,6 +881,9 @@ body {
   text-align: left;
   cursor: pointer;
 }
+/* A link styled as one of these (Map, Open link) needs to sit and centre like
+   the buttons beside it, and keep the tap height an inline link would lose. */
+a.note-back { display: inline-flex; align-items: center; text-decoration: none; color: var(--focus); }
 
 /* .rest gives no height of its own; #rest-line gets enough from its stacked
    child rows, but #open-triage is a single line, so it needs its own floor. */
@@ -995,6 +1010,269 @@ body::after {
 }
 .done { text-shadow: 0 1px 0 rgba(0,0,0,.3); }
 .eyebrow, .list h3 { color: #d2a13c; }
+
+/* ================= Refresh, build 31 =================
+   Layers separate by lightness, never by outlines: a dark ground, neutral
+   lifted panels, and each room's tint used only as an accent (its icon square,
+   its pills, the dots on Today). Everything above this block still applies;
+   this block overrides the borders and flat fills it replaces. */
+
+body::after { background: radial-gradient(130% 100% at 50% 0%, transparent 60%, rgba(0,0,0,.25) 100%); }
+
+.screen { gap: 16px; padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
+
+/* Panels: no border, lifted fill, a faint top highlight. */
+.card, .list, .tonight, .detail {
+  border: 0;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: inset 0 1px 0 rgba(240,233,216,.06), 0 12px 28px rgba(0,0,0,.35);
+}
+.list, .tonight { padding: 12px 16px; }
+.list h3, .tonight h3 { margin: 2px 0 6px; color: var(--focus); }
+.list .list { box-shadow: none; padding: 0; background: none; }
+
+/* Inputs and quiet buttons sit on a soft fill instead of an outline. */
+.field input, .field select, .task-row input, .other-input input, #note-text {
+  border: 1px solid transparent;
+  background: rgba(0,0,0,.28);
+  border-radius: 12px;
+}
+.field input:focus, .field select:focus, .task-row input:focus, .other-input input:focus, #note-text:focus {
+  border-color: rgba(210,161,60,.55);
+  outline: none;
+}
+.done-row button, .links button, .step button, .other, #other-save, .export, .race-line button, .back, .gate button.alt {
+  border: 0;
+  background: var(--fill);
+  color: var(--text);
+  border-radius: 14px;
+}
+.done { border-radius: 16px; background: linear-gradient(180deg, #9c3542, #7a2733); }
+.done.quiet { background: var(--fill); border: 0; }
+.back { padding: 0 14px 0 10px; }
+.wrow { border-bottom-color: var(--line); }
+.wrow .box, .check .box { border-color: rgba(240,233,216,.28); }
+.ring-track { stroke: rgba(240,233,216,.12); }
+.fin-loc, .note-row { border-bottom-color: var(--line); }
+.fin-quick { border: 0; background: var(--fill); color: var(--focus); }
+.fin-progress { background: rgba(240,233,216,.10); }
+.footer { border-top-color: var(--line); }
+.sheet { background: var(--bg); }
+
+/* ---- Room headers: a way back, the room's icon square, name and status ---- */
+.room-head { flex-direction: column; align-items: stretch; gap: 8px; }
+.room-head .back-link {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 2px;
+  min-height: var(--tap); margin-left: -6px; padding: 0 8px 0 2px;
+  background: none; border: 0; border-radius: 10px;
+  color: var(--dim); font: inherit; font-size: 15px; cursor: pointer;
+}
+.room-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.room-title > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.room-head h1, .room-head h2 { font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1.1; letter-spacing: 0; }
+.room-status { margin: 0; text-align: left; font-size: 14px; color: var(--dim); }
+
+/* An icon square: the room's tint at full strength, a dark glyph on it. */
+.chip {
+  flex: none; width: 38px; height: 38px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--tint, var(--focus)); color: #0d100e;
+}
+.chip.lg { width: 44px; height: 44px; border-radius: 14px; }
+.chip.soft { background: color-mix(in srgb, var(--tint, var(--focus)) 26%, transparent); color: var(--tint-light, var(--text)); }
+.chip svg { width: 20px; height: 20px; }
+.chip.lg svg { width: 22px; height: 22px; }
+
+/* ---- Rows: icon, title, one quiet line, a pill; tap opens the item panel ---- */
+.group { display: flex; flex-direction: column; }
+.item {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 68px; padding: 10px 0;
+  background: none; border: 0; border-radius: 0;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.item + .item { box-shadow: inset 0 1px 0 var(--line); }
+.item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.item-title { font-size: 16px; line-height: 1.3; overflow-wrap: anywhere; }
+.item-title.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.item-meta { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+.item.done-state .item-title { color: var(--dim); }
+.pill {
+  flex: none; display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: var(--fill); color: var(--dim);
+}
+.pill.due { background: rgba(210,161,60,.24); color: #f0cf7e; }
+.pill.ok { background: rgba(155,185,138,.22); color: var(--ok); }
+.pill.tint { background: color-mix(in srgb, var(--tint) 26%, transparent); color: var(--tint-light, var(--text)); }
+.item-chev { flex: none; color: rgba(240,233,216,.32); display: inline-flex; }
+
+/* ---- The item panel (slides up from the bottom) ---- */
+.ipanel-wrap { position: fixed; inset: 0; z-index: 20; }
+.ipanel-backdrop { position: absolute; inset: 0; background: rgba(3,5,4,.62); }
+.ipanel {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  max-height: 88vh; overflow-y: auto;
+  max-width: 520px; margin: 0 auto;
+  padding: 10px max(20px, env(safe-area-inset-left)) calc(22px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-right));
+  border-radius: 28px 28px 0 0;
+  background: #202b1f;
+  box-shadow: inset 0 1px 0 rgba(240,233,216,.07), 0 -18px 40px rgba(0,0,0,.5);
+  display: flex; flex-direction: column; gap: 16px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ipanel { animation: ipanel-up 220ms cubic-bezier(.2,.8,.2,1); }
+  @keyframes ipanel-up { from { transform: translateY(24px); opacity: .4; } to { transform: none; opacity: 1; } }
+}
+.ipanel-grip { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: rgba(240,233,216,.22); }
+.ipanel-head { display: flex; align-items: flex-start; gap: 14px; }
+.ipanel-head > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ipanel-head h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 23px; line-height: 1.25; overflow-wrap: anywhere; }
+.ipanel-head p { margin: 0; font-size: 14px; color: var(--dim); }
+.ipanel-close {
+  flex: none; width: var(--tap); height: var(--tap); border: 0; border-radius: 22px;
+  background: var(--fill); color: var(--dim); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.ipanel-body { display: flex; flex-direction: column; gap: 12px; }
+.ipanel-note { margin: 0; font-size: 15px; line-height: 1.5; color: #ddd6c4; overflow-wrap: anywhere; white-space: pre-wrap; }
+.ipanel-fact { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--fill); font-size: 15px; }
+.ipanel-fact span { display: flex; flex-direction: column; gap: 2px; }
+.ipanel-fact small { font-size: 13px; color: var(--dim); }
+.ipanel-actions { display: flex; flex-direction: column; gap: 10px; }
+.ipanel-actions .done { margin-top: 0; }
+.ipanel-quiet { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ipanel-quiet > :only-child { grid-column: span 2; }
+.pbtn {
+  min-height: 48px; padding: 0 12px; border: 0; border-radius: 16px;
+  background: var(--fill); color: var(--text); font: inherit; font-size: 15px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; text-decoration: none; text-align: center;
+}
+.pdanger { align-self: center; min-height: var(--tap); padding: 0 16px; border: 0; background: none; color: var(--rose); font: inherit; font-size: 15px; cursor: pointer; }
+
+/* ---- Today ---- */
+.greet { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-top: 6px; }
+.greet > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.greet-date { margin: 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--focus); }
+.greet h1 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.1; }
+.greet-line { margin: 0; font-size: 15px; color: var(--dim); }
+.mark {
+  flex: none; width: 40px; height: 40px; border-radius: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--raised); color: var(--focus); font-family: var(--serif); font-size: 18px;
+}
+
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0 7px; border-radius: 14px; color: var(--text); }
+.day-name { font-size: 11px; color: var(--dim); }
+.day-num { font-size: 16px; font-variant-numeric: tabular-nums; }
+.day.past .day-num { color: var(--dim); }
+.day.today { background: var(--text); color: #0d100e; }
+.day.today .day-name { color: #0d100e; font-weight: 600; }
+.day.today .day-num { font-weight: 700; }
+.day-dots { display: flex; gap: 3px; height: 5px; }
+.day-dots i { width: 5px; height: 5px; border-radius: 3px; background: var(--tint); }
+
+.triage-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 52px; padding: 0 16px; border: 0; border-radius: 18px;
+  background: var(--raised); color: var(--text); font: inherit; font-size: 16px; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(240,233,216,.07);
+}
+.triage-row > span { display: flex; align-items: center; gap: 12px; }
+.triage-row .count { font-size: 14px; color: var(--dim); gap: 6px; }
+.triage-row .chip { width: 30px; height: 30px; border-radius: 10px; }
+.triage-row .chip svg { width: 17px; height: 17px; }
+
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tile {
+  display: flex; flex-direction: column; gap: 9px; min-width: 0; min-height: 136px;
+  padding: 16px; border: 0; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--tint) 27%, #090c0a);
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 12px 26px rgba(0,0,0,.35);
+}
+.tile.wide { grid-column: span 2; flex-direction: row; align-items: center; justify-content: space-between; min-height: 0; padding: 18px; }
+.tile.wide .tile-body { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.tile-label { font-size: 13px; color: var(--tint-light); }
+.tile.wide .tile-label { letter-spacing: .08em; text-transform: uppercase; }
+.tile-head { display: flex; align-items: center; gap: 10px; }
+.tile-headline { font-family: var(--serif); font-size: 19px; line-height: 1.2; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.tile.wide .tile-headline { font-size: 22px; }
+.tile-detail { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+.tile.span2 { grid-column: span 2; }
+.tile.later { background: #121912; cursor: default; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.tile.later .tile-headline { color: var(--dim); }
+.tile.later .chips { display: flex; gap: 6px; }
+.tile-ring { position: relative; flex: none; width: 64px; height: 64px; }
+.tile-ring span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+/* ---- Bottom bar: Today, Rooms, Notes ---- */
+.rail {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 6px max(24px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  border-top: 0;
+  background: linear-gradient(to top, #060807 72%, rgba(6,8,7,0));
+  overflow: visible;
+}
+.rail-slot {
+  flex: none; min-width: 0; height: 54px; border-radius: 14px;
+  flex-direction: column; gap: 3px; font-size: 11px; color: var(--dim);
+}
+.rail-slot svg { width: 23px; height: 23px; }
+.rail-slot[aria-current="page"] { background: none; box-shadow: none; color: var(--focus); }
+.rail-slot[aria-current="page"]::before { display: none; }
+.rail-slot.rail-home::after { display: none; }
+.rail-count { top: 2px; bottom: auto; right: calc(50% - 26px); background: var(--accent); color: var(--text); }
+.panels { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+.has-capture .panels { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
+
+/* ---- Capture bar: a note from anywhere on Today and Rooms ---- */
+.capture {
+  position: fixed; z-index: 6;
+  left: max(14px, env(safe-area-inset-left)); right: max(14px, env(safe-area-inset-right));
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  max-width: 492px; margin: 0 auto;
+  display: flex; align-items: center; gap: 8px;
+  min-height: 52px; padding: 0 7px 0 18px; border-radius: 26px;
+  background: #2c3a2a; box-shadow: inset 0 1px 0 rgba(240,233,216,.08), 0 12px 28px rgba(0,0,0,.5);
+}
+.capture input { flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 16px; outline: none; }
+.capture input::placeholder { color: rgba(240,233,216,.45); }
+.capture button {
+  flex: none; width: 40px; height: 40px; border: 0; border-radius: 20px;
+  background: var(--accent); color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.capture button:disabled { opacity: .45; cursor: default; }
+
+/* ---- A short status message ---- */
+.toast {
+  position: fixed; z-index: 30; left: 50%; transform: translateX(-50%);
+  bottom: calc(136px + env(safe-area-inset-bottom));
+  max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 14px;
+  background: #2c3a2a; color: var(--text); font-size: 15px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.5);
+}
+
+/* Notes screen */
+/* Forms inside panels: typed text starts at the left, and two fields side by
+   side can never push past the panel edge (iPhone date boxes are wide). */
+.list .field input, .list .field select { text-align: left; }
+.lv-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.field input, .field select { min-width: 0; max-width: 100%; }
+.field input[type="date"] { -webkit-appearance: none; appearance: none; display: flex; align-items: center; }
+
+/* Fitness keeps its own colour for the ring, the distance and the ladder. */
+.ring-fill, .col .bar { stroke: var(--tint, var(--accent)); }
+.col .bar { background: var(--tint, var(--accent)); }
+.card h2 .dist { color: var(--tint-light, var(--accent)); }
+
+.ipanel:focus { outline: none; }
+#open-triage { border: 0; border-left: 0; padding: 0 16px; font-weight: 500; }
+.room-head > .back { align-self: flex-start; }
+.wrow input:checked + .box, .check input:checked + .box { background: var(--tint, var(--accent)); border-color: var(--tint, var(--accent)); }
 </style>
 </head>
 <body>
@@ -1006,17 +1284,37 @@ body::after {
 <!-- Today: the front door. Its cards are assembled from the rooms at render
      time, so a room built later shows up here without this markup changing. -->
 <main class="screen" id="today-screen" hidden>
-  <div class="room-head">
-    <h1>Today</h1>
-    <p class="room-status" id="today-date"></p>
+  <div class="greet">
+    <div>
+      <p class="greet-date" id="today-date"></p>
+      <h1 id="today-greeting">Today</h1>
+      <p class="greet-line" id="today-line"></p>
+    </div>
+    <span class="mark" aria-hidden="true">B</span>
   </div>
 
-  <div class="today-cards" id="today-cards"></div>
+  <!-- This week, Sunday to Saturday. A dot under a day means a room has
+       something on it; each room adds its own through ROOM_VIEWS[id].dates. -->
+  <div class="days" id="today-days" role="img"></div>
 
-  <section class="list" id="today-soon" aria-labelledby="today-soon-h" hidden>
-    <h3 id="today-soon-h">Coming later</h3>
-    <p class="hint" id="today-soon-text"></p>
-  </section>
+  <button type="button" class="triage-row" id="today-triage" hidden></button>
+
+  <!-- One tile per live room, assembled from ROOM_VIEWS; planned rooms share
+       one quiet tile at the end. -->
+  <div class="tiles" id="today-cards"></div>
+</main>
+
+<!-- Rooms: every room, live or planned. The bottom bar holds three slots
+     whatever the number of rooms, so a new room only ever adds a tile here. -->
+<main class="screen" id="rooms-screen" hidden>
+  <div class="greet">
+    <div>
+      <p class="greet-date">Beez</p>
+      <h1>Rooms</h1>
+      <p class="greet-line" id="rooms-line"></p>
+    </div>
+  </div>
+  <div class="tiles" id="rooms-tiles"></div>
 </main>
 
 <main class="screen" id="fitness-screen">
@@ -1045,6 +1343,13 @@ body::after {
     <h2 id="session-name">Rest</h2>
     <p class="guidance" id="session-guidance"></p>
     <button type="button" class="anyway" id="anyway" hidden></button>
+
+    <!-- Which of the week's runs this was. Only shown when more than one is open,
+         so a moderate run done on a Friday no longer lands on the shakeout. -->
+    <label class="field run-as" id="run-as" hidden>
+      <span>Counts as</span>
+      <select id="in-counts" aria-label="Which run this counts as"></select>
+    </label>
 
     <!-- 3. Log fields -->
     <div class="log" id="log-fields" hidden>
@@ -1143,7 +1448,7 @@ body::after {
 
     <section class="list" id="fitness-notes" aria-labelledby="fitness-notes-h" hidden>
       <h3 id="fitness-notes-h">Fitness notes</h3>
-      <div id="fitness-notes-items"></div>
+      <div class="group" id="fitness-notes-items"></div>
     </section>
 
     <p class="footnote" id="offline-note">Checking offline copy…</p>
@@ -1230,7 +1535,7 @@ body::after {
 
   <section class="list" id="finance-notes" aria-labelledby="finance-notes-h" hidden>
     <h3 id="finance-notes-h">Finance notes</h3>
-    <div id="finance-notes-items"></div>
+    <div class="group" id="finance-notes-items"></div>
   </section>
 </main>
 
@@ -1242,13 +1547,11 @@ body::after {
 
   <section class="list" id="lv-upcoming" aria-labelledby="lv-upcoming-h" hidden>
     <h3 id="lv-upcoming-h">Planned</h3>
-    <div id="lv-upcoming-items"></div>
+    <div class="group" id="lv-upcoming-items"></div>
   </section>
 
-  <section class="list" id="lv-someday" aria-labelledby="lv-someday-h" hidden>
-    <h3 id="lv-someday-h">Someday</h3>
-    <div id="lv-someday-items"></div>
-  </section>
+  <!-- Undated things, one shelf each. Built from Rooms.LIVING_SHELVES. -->
+  <div id="lv-shelves"></div>
 
   <p class="empty" id="lv-empty" hidden>Nothing planned yet. Add the next good thing below.</p>
 
@@ -1265,8 +1568,25 @@ body::after {
         <select id="lv-add-kind" aria-label="Kind"></select>
       </label>
       <label class="field">
-        <span>Date, if there is one</span>
+        <span>Where, optional</span>
+        <input type="text" id="lv-add-where" maxlength="60" enterkeyhint="done"
+               placeholder="Melbourne" aria-label="Where">
+      </label>
+    </div>
+    <label class="field">
+      <span>Link, optional — a map pin or website</span>
+      <input type="url" id="lv-add-link" maxlength="500" enterkeyhint="done" inputmode="url"
+             autocapitalize="off" autocorrect="off" spellcheck="false"
+             placeholder="Paste from Google Maps" aria-label="Link">
+    </label>
+    <div class="lv-fields">
+      <label class="field">
+        <span id="lv-add-date-label">Date, if there is one</span>
         <input type="date" id="lv-add-date" aria-label="Date">
+      </label>
+      <label class="field" id="lv-add-end-box" hidden>
+        <span>Back on</span>
+        <input type="date" id="lv-add-end" aria-label="Last day of the trip">
       </label>
     </div>
     <button type="button" class="done" id="lv-add-save">Add</button>
@@ -1275,12 +1595,67 @@ body::after {
 
   <section class="list" id="lv-past" aria-labelledby="lv-past-h" hidden>
     <h3 id="lv-past-h">Done and past</h3>
-    <div id="lv-past-items"></div>
+    <div class="group" id="lv-past-items"></div>
   </section>
 
   <section class="list" id="living-notes" aria-labelledby="living-notes-h" hidden>
     <h3 id="living-notes-h">Living notes</h3>
-    <div id="living-notes-items"></div>
+    <div class="group" id="living-notes-items"></div>
+  </section>
+</main>
+
+<main class="screen" id="maintenance-screen" hidden>
+  <div class="room-head">
+    <h1>Maintenance</h1>
+    <p class="room-status" id="maintenance-status"></p>
+  </div>
+
+  <section class="list" id="mt-due" aria-labelledby="mt-due-h" hidden>
+    <h3 id="mt-due-h">Due now</h3>
+    <div class="group" id="mt-due-items"></div>
+  </section>
+
+  <section class="list" id="mt-later" aria-labelledby="mt-later-h" hidden>
+    <h3 id="mt-later-h">Coming up</h3>
+    <div class="group" id="mt-later-items"></div>
+  </section>
+
+  <p class="empty" id="mt-empty" hidden>No recurring jobs yet. Add one below.</p>
+
+  <section class="list" id="mt-cal" aria-labelledby="mt-cal-h" hidden>
+    <h3 id="mt-cal-h">Your calendar</h3>
+    <p class="mt-how">Beez never alerts you. Your phone's calendar can: this puts every job
+      on it as a repeating 7 PM event with its own alert. Open a job to add just that one.
+      The calendar keeps its own rhythm after that — if you do a job early or late, Beez
+      still has the right next date.</p>
+    <button type="button" class="done" id="mt-cal-all">Put all jobs on my calendar</button>
+    <p class="fin-msg" id="mt-cal-msg" hidden></p>
+  </section>
+
+  <section class="list" aria-labelledby="mt-add-h">
+    <h3 id="mt-add-h">Add a recurring job</h3>
+    <label class="field">
+      <span>What</span>
+      <input type="text" id="mt-add-title" maxlength="80" enterkeyhint="done"
+             placeholder="Change the AC filter" aria-label="Job to add">
+    </label>
+    <div class="lv-fields">
+      <label class="field">
+        <span>How often</span>
+        <select id="mt-add-every" aria-label="How often"></select>
+      </label>
+      <label class="field">
+        <span>Last done</span>
+        <input type="date" id="mt-add-last" aria-label="Last done">
+      </label>
+    </div>
+    <button type="button" class="done" id="mt-add-save">Add</button>
+    <p class="fin-msg" id="mt-add-msg" hidden></p>
+  </section>
+
+  <section class="list" id="maintenance-notes" aria-labelledby="maintenance-notes-h" hidden>
+    <h3 id="maintenance-notes-h">Maintenance notes</h3>
+    <div class="group" id="maintenance-notes-items"></div>
   </section>
 </main>
 
@@ -1294,11 +1669,11 @@ body::after {
             placeholder="Anything. Sort it later." aria-label="New note"></textarea>
   <button type="button" class="done" id="note-save">Save</button>
 
-  <button type="button" class="rest" id="open-triage" hidden></button>
+  <button type="button" class="triage-row" id="open-triage" hidden></button>
 
   <section class="list" aria-labelledby="notes-h">
     <h3 id="notes-h">In Notes</h3>
-    <div id="notes-items"></div>
+    <div class="group" id="notes-items"></div>
     <p class="empty" id="notes-empty" hidden>Nothing here yet. Dump something.</p>
   </section>
 </main>
@@ -1322,6 +1697,34 @@ body::after {
 
 </div>
 </div>
+
+<!-- A note from anywhere on Today and Rooms: it lands in Notes for triage. -->
+<form class="capture" id="capture" hidden autocomplete="off">
+  <label for="capture-text" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Add a note</label>
+  <input type="text" id="capture-text" maxlength="500" enterkeyhint="send" placeholder="Get it out of your head…">
+  <button type="submit" id="capture-save" aria-label="Save to Notes" disabled></button>
+</form>
+
+<!-- The item panel: one job, plan, place or note, with its actions. Filled by
+     openPanel(); closed by the backdrop, the close button or Escape. -->
+<div class="ipanel-wrap" id="ipanel" hidden>
+  <div class="ipanel-backdrop" id="ipanel-backdrop"></div>
+  <div class="ipanel" id="ipanel-box" role="dialog" aria-modal="true" aria-labelledby="ipanel-title" tabindex="-1">
+    <span class="ipanel-grip" aria-hidden="true"></span>
+    <div class="ipanel-head">
+      <span class="chip lg" id="ipanel-chip" aria-hidden="true"></span>
+      <div>
+        <h2 id="ipanel-title"></h2>
+        <p id="ipanel-meta"></p>
+      </div>
+      <button type="button" class="ipanel-close" id="ipanel-close" aria-label="Close"></button>
+    </div>
+    <div class="ipanel-body" id="ipanel-body"></div>
+    <div class="ipanel-actions" id="ipanel-actions"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <!-- The week checklist -->
 <div class="sheet" id="week-sheet" hidden>
@@ -1422,7 +1825,7 @@ const PLAN = [
 
 const TOTAL_WEEKS = PLAN.length;
 const HALF_CAP = 13.1;
-/* The app is called Higs now, but this key is its original name on purpose:
+/* The app is called Beez now (Higs before that), but this key is its original name on purpose:
    every logged run and note on the phone is saved under it. Renaming the key
    orphans all of that data. It never changes, whatever the app is called. */
 const STORE_KEY = "the-build";
@@ -1475,6 +1878,7 @@ function load() {
        carried through untouched rather than rebuilt or dropped. */
     finance: ROOMS_READY ? Rooms.migrateFinance(saved.finance) : (saved.finance || null),
     living: ROOMS_READY ? Rooms.migrateLiving(saved.living) : (saved.living || null),
+    maintenance: ROOMS_READY ? Rooms.migrateMaintenance(saved.maintenance) : (saved.maintenance || null),
 
     /* `v` records the shape a save was written with, so whatever is there is
        kept. A save with no `v` is stamped 1 — the shape that existed before this
@@ -1814,6 +2218,226 @@ function closeWeeks() {
 
 const el = function (id) { return document.getElementById(id); };
 
+/* ---------- refresh, build 31: icons, tints, rows, the item panel ---------- */
+
+/* Line icons, drawn at 24×24 with a round stroke. Static strings written here —
+   never typed text — so setting them as SVG markup is safe. Rooms are drawn by
+   their id; anything else by name. */
+const ICONS = {
+  fitness: '<polyline points="3 12 7 12 10 5 14 19 17 12 21 12"/>',
+  finance: '<circle cx="12" cy="12" r="9"/><path d="M14.6 9.4c-.5-.8-1.4-1.2-2.6-1.2-1.5 0-2.6.8-2.6 1.9 0 2.6 5.4 1.3 5.4 3.9 0 1.1-1.1 1.9-2.8 1.9-1.2 0-2.2-.5-2.7-1.3M12 6.6v10.8"/>',
+  living: '<circle cx="12" cy="12" r="9"/><polygon points="15.5 8.5 13.5 13.5 8.5 15.5 10.5 10.5"/>',
+  maintenance: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L4 16.7 7.3 20l5.3-5.3a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+  family: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  career: '<polyline points="4 17 10 11 13 14 20 7"/><polyline points="15 7 20 7 20 12"/>',
+  today: '<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
+  rooms: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+  notes: '<path d="M4 13l2.5-7h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M4 13h4l1.5 2h5L16 13h4"/>',
+  note: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+  food: '<path d="M7 3v7a2 2 0 0 0 2 2v9M11 3v7a2 2 0 0 1-2 2M9 3v6"/><path d="M17 21V3c-2 1.5-3 4-3 7 0 1.5.8 2.5 3 2.5"/>',
+  place: '<path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/>',
+  trip: '<path d="M2.5 16.5 21 9l-2.5-2-6.5 2.5L6 5 4 6l3.5 5.5L3 13.5z"/><path d="M3 21h18"/>',
+  calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  check: '<polyline points="5 12 10 17 19 7"/>',
+  chev: '<polyline points="9 6 15 12 9 18"/>',
+  back: '<polyline points="15 6 9 12 15 18"/>',
+  close: '<line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>',
+  send: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/>'
+};
+
+function svgIcon(name, size, width) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  node.setAttribute("viewBox", "0 0 24 24");
+  node.setAttribute("width", String(size || 20));
+  node.setAttribute("height", String(size || 20));
+  node.setAttribute("fill", "none");
+  node.setAttribute("stroke", "currentColor");
+  node.setAttribute("stroke-width", String(width || 1.8));
+  node.setAttribute("stroke-linecap", "round");
+  node.setAttribute("stroke-linejoin", "round");
+  node.setAttribute("aria-hidden", "true");
+  node.innerHTML = ICONS[name] || ICONS.note;
+  return node;
+}
+
+/* A room tint, and a lighter version of it for text on dark fills. */
+function lighten(hex, amount) {
+  const h = String(hex || "#d2a13c").replace("#", "");
+  const c = [0, 2, 4].map(function (i) { return parseInt(h.slice(i, i + 2), 16); });
+  return "#" + c.map(function (v) { return Math.round(v + (255 - v) * amount).toString(16).padStart(2, "0"); }).join("");
+}
+
+function setTint(node, hex) {
+  node.style.setProperty("--tint", hex);
+  node.style.setProperty("--tint-light", lighten(hex, 0.45));
+  return node;
+}
+
+function chip(iconName, tint, extra) {
+  const node = document.createElement("span");
+  node.className = "chip" + (extra ? " " + extra : "");
+  node.setAttribute("aria-hidden", "true");
+  setTint(node, tint);
+  node.appendChild(svgIcon(iconName));
+  return node;
+}
+
+function roomTint(roomId) {
+  const room = ROOMS_READY ? Rooms.roomById(roomId) : null;
+  return room ? room.tint : "#d2a13c";
+}
+const NOTES_TINT = "#d06a5a";
+
+/* The one row every list uses: icon square, title, one quiet line, an optional
+   pill. The whole row is a button that opens the item panel, so the list itself
+   carries no action buttons. Every string goes in through textContent. */
+function itemRow(o) {
+  const row = document.createElement("button");
+  row.type = "button";
+  row.className = "item" + (o.dim ? " done-state" : "");
+  setTint(row, o.tint);
+  row.appendChild(chip(o.icon, o.tint, "soft"));
+
+  const body = document.createElement("span");
+  body.className = "item-body";
+  const title = document.createElement("span");
+  title.className = "item-title" + (o.clamp ? " clamp" : "");
+  title.textContent = o.title;
+  body.appendChild(title);
+  if (o.meta) {
+    const meta = document.createElement("span");
+    meta.className = "item-meta";
+    meta.textContent = o.meta;
+    body.appendChild(meta);
+  }
+  row.appendChild(body);
+
+  if (o.pill) {
+    const pill = document.createElement("span");
+    pill.className = "pill" + (o.pill.tone ? " " + o.pill.tone : "");
+    if (o.pill.tone === "ok") pill.appendChild(svgIcon("check", 12, 2.4));
+    pill.appendChild(document.createTextNode(o.pill.text));
+    row.appendChild(pill);
+  } else {
+    const chev = document.createElement("span");
+    chev.className = "item-chev";
+    chev.appendChild(svgIcon("chev", 16, 2));
+    row.appendChild(chev);
+  }
+
+  row.addEventListener("click", function () { openPanel(o.panel(), row); });
+  return row;
+}
+
+/* The item panel. `p` is {icon, tint, title, meta, note, facts:[{icon, text,
+   sub}], primary:{label, go}, quiet:[{label, go} | {label, href}],
+   danger:{label, go}}. An action closes the panel first, then runs. */
+let panelOpener = null;
+
+function openPanel(p, opener) {
+  panelOpener = opener || null;
+  const chipBox = el("ipanel-chip");
+  chipBox.innerHTML = "";
+  setTint(chipBox, p.tint);
+  chipBox.appendChild(svgIcon(p.icon, 22));
+  el("ipanel-title").textContent = p.title;
+  el("ipanel-meta").textContent = p.meta || "";
+  el("ipanel-meta").hidden = !p.meta;
+
+  const body = el("ipanel-body");
+  body.innerHTML = "";
+  (p.facts || []).forEach(function (f) {
+    const row = document.createElement("div");
+    row.className = "ipanel-fact";
+    row.appendChild(svgIcon(f.icon || "calendar", 20));
+    const words = document.createElement("span");
+    words.appendChild(document.createTextNode(f.text));
+    if (f.sub) {
+      const sub = document.createElement("small");
+      sub.textContent = f.sub;
+      words.appendChild(sub);
+    }
+    row.appendChild(words);
+    body.appendChild(row);
+  });
+  if (p.note) {
+    const note = document.createElement("p");
+    note.className = "ipanel-note";
+    note.textContent = p.note;
+    body.appendChild(note);
+  }
+  body.hidden = !body.childNodes.length;
+
+  const acts = el("ipanel-actions");
+  acts.innerHTML = "";
+  function run(go) { return function () { closePanel(); go(); }; }
+  if (p.primary) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "done";
+    b.textContent = p.primary.label;
+    b.addEventListener("click", run(p.primary.go));
+    acts.appendChild(b);
+  }
+  if (p.quiet && p.quiet.length) {
+    const grid = document.createElement("div");
+    grid.className = "ipanel-quiet";
+    p.quiet.forEach(function (q) {
+      let b;
+      if (q.href) {
+        b = document.createElement("a");
+        b.href = q.href;
+        b.target = "_blank";
+        b.rel = "noopener noreferrer";
+      } else {
+        b = document.createElement("button");
+        b.type = "button";
+        b.addEventListener("click", run(q.go));
+      }
+      b.className = "pbtn";
+      b.textContent = q.label;
+      grid.appendChild(b);
+    });
+    acts.appendChild(grid);
+  }
+  if (p.danger) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pdanger";
+    b.textContent = p.danger.label;
+    b.addEventListener("click", run(p.danger.go));
+    acts.appendChild(b);
+  }
+
+  el("ipanel").hidden = false;
+  el("ipanel-box").focus();
+}
+
+function closePanel() {
+  if (el("ipanel").hidden) return;
+  el("ipanel").hidden = true;
+  if (panelOpener && document.contains(panelOpener)) panelOpener.focus();
+  panelOpener = null;
+}
+
+el("ipanel-close").appendChild(svgIcon("close", 18, 2));
+el("ipanel-close").addEventListener("click", closePanel);
+el("ipanel-backdrop").addEventListener("click", closePanel);
+document.addEventListener("keydown", function (event) {
+  if (event.key === "Escape") closePanel();
+});
+
+function toast(text) {
+  const t = el("toast");
+  t.textContent = text;
+  t.hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(function () { t.hidden = true; }, 3600);
+}
+
+/* Whose app this is: the greeting on Today uses it. */
+const OWNER_NAME = "Ryan";
+
 /* The session whose numbers are open for correction, if any. */
 let editingId = null;
 
@@ -1823,7 +2447,7 @@ let editingId = null;
    the list is read off the ROOMS table instead of being written out again here.
    Rooms that are not live are listed too — their <main> simply does not exist
    yet, and showScreen skips what it cannot find. */
-const SCREENS = ["today-screen", "notes-screen", "triage-screen"].concat(
+const SCREENS = ["today-screen", "rooms-screen", "notes-screen", "triage-screen"].concat(
   (ROOMS_READY ? Rooms.ROOMS : []).map(function (room) { return screenFor(room.id); })
 );
 
@@ -1832,10 +2456,14 @@ const SCREENS = ["today-screen", "notes-screen", "triage-screen"].concat(
    card it puts on Today. Building a room means adding its row here — Today, the
    bar and the header all pick it up with no other edit in this file. */
 const ROOM_VIEWS = {
-  fitness: { render: render, line: fitnessLine, card: fitnessCard },
+  fitness: { render: render, line: fitnessLine, card: fitnessCard, dates: fitnessDates },
   finance: { render: renderFinance, line: financeLine, card: financeCard },
-  living: { render: renderLiving, line: livingLine, card: livingCard }
+  living: { render: renderLiving, line: livingLine, card: livingCard, dates: livingDates },
+  maintenance: { render: renderMaintenance, line: maintenanceLine, card: maintenanceCard, dates: maintenanceDates }
 };
+
+/* Where a room's back link returns: Today or Rooms, whichever it was opened from. */
+let lastHub = "today-screen";
 
 /* The screen currently showing. Reopening the app re-renders this one, so a
    stale render from before midnight is never left on screen. The app opens on
@@ -1912,6 +2540,12 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 
   currentScreen = id;
+  if (id === "today-screen" || id === "rooms-screen") lastHub = id;
+  closePanel();
+  const capture = el("capture");
+  const withCapture = ROOMS_READY && (id === "today-screen" || id === "rooms-screen");
+  capture.hidden = !withCapture;
+  document.body.classList.toggle("has-capture", withCapture);
   renderRail();
   renderScreen(id);
 }
@@ -1921,12 +2555,15 @@ function showScreen(id) {
    is on screen. */
 function renderScreen(id) {
   if (id === "today-screen") return renderToday();
+  if (id === "rooms-screen") return renderRooms();
   if (id === "notes-screen") return renderNotes();
   if (id === "triage-screen") return renderTriage();
 
   const room = roomOf(id);
   const view = ROOM_VIEWS[room];
   if (!view) return;
+  const back = el(id).querySelector(".back-link");
+  if (back) back.lastChild.textContent = lastHub === "rooms-screen" ? "Rooms" : "Today";
   view.render();
   /* Fitness deliberately has no #fitness-status — its panel already leads with
      the session card, so a header repeat would say it twice — and it simply
@@ -1966,51 +2603,88 @@ function renderRail() {
   if (!rail || !ROOMS_READY) return;
 
   rail.innerHTML = "";
-
-  const home = railSlot("today-screen", "🏠", "Today", "#d2a13c", true, 0);
-  home.classList.add("rail-home");
-  rail.appendChild(home);
-
-  Rooms.ROOMS.forEach(function (room) {
-    rail.appendChild(railSlot(screenFor(room.id), room.icon, room.label, room.tint, room.live, 0));
-  });
-
-  rail.appendChild(railSlot("notes-screen", "📥", "Notes", "#b05a4a", true,
-    Rooms.untriaged(state.notes).length));
+  rail.appendChild(railSlot("today-screen", "today", "Today", 0));
+  rail.appendChild(railSlot("rooms-screen", "rooms", "Rooms", 0));
+  rail.appendChild(railSlot("notes-screen", "notes", "Notes", Rooms.untriaged(state.notes).length));
 }
 
-/* Triage is a step inside Notes rather than a room of its own, so it has no rail
-   slot. Leaving the rail with nothing lit while you are in it reads as being
-   nowhere, so Notes stays lit for both. */
+/* Three slots whatever the number of rooms: a room screen lights Rooms, and
+   Triage, a step inside Notes, lights Notes. */
 function railTarget() {
-  return currentScreen === "triage-screen" ? "notes-screen" : currentScreen;
+  if (currentScreen === "triage-screen") return "notes-screen";
+  if (currentScreen === "today-screen" || currentScreen === "notes-screen") return currentScreen;
+  return "rooms-screen";
 }
 
-function railSlot(screenId, icon, label, tint, live, count) {
+function railSlot(screenId, iconName, label, count) {
   const node = document.createElement("button");
   node.type = "button";
   node.className = "rail-slot";
   node.id = "rail-" + screenId;
-  node.disabled = !live;
-  node.setAttribute("aria-label", label);
-  node.style.setProperty("--tint", tint);
   if (screenId === railTarget()) node.setAttribute("aria-current", "page");
-
-  const iconEl = document.createElement("span");
-  iconEl.setAttribute("aria-hidden", "true");
-  iconEl.textContent = icon;
-  node.appendChild(iconEl);
+  node.appendChild(svgIcon(iconName, 23));
+  node.appendChild(document.createTextNode(label));
 
   /* A status, not a notification: no badge at all at zero. */
   if (count) {
     const badge = document.createElement("span");
     badge.className = "rail-count";
     badge.textContent = String(count);
+    badge.setAttribute("aria-label", count + " to triage");
     node.appendChild(badge);
   }
 
-  if (live) node.addEventListener("click", function () { showScreen(screenId); });
+  node.addEventListener("click", function () { showScreen(screenId); });
   return node;
+}
+
+/* Each room screen gets a way back and its icon square, added once at start so
+   the room markup stays as it was. Existing headings and status lines are moved,
+   not rebuilt, so their ids keep working. */
+function decorateRoomHeads() {
+  if (!ROOMS_READY) return;
+  /* Fitness's overlays sit outside its screen, so they get its tint directly. */
+  ["week-sheet", "ladder-sheet", "summary-sheet"].forEach(function (id) {
+    if (el(id)) setTint(el(id), roomTint("fitness"));
+  });
+  const notesHead = el("notes-screen").querySelector(".room-head");
+  if (notesHead && !notesHead.querySelector(".room-title")) {
+    const title = document.createElement("div");
+    title.className = "room-title";
+    title.appendChild(chip("notes", NOTES_TINT, "lg"));
+    const words = document.createElement("div");
+    Array.prototype.slice.call(notesHead.children).forEach(function (n) { words.appendChild(n); });
+    title.appendChild(words);
+    notesHead.appendChild(title);
+  }
+  Rooms.ROOMS.forEach(function (room) {
+    const screen = el(screenFor(room.id));
+    if (!screen) return;
+    setTint(screen, room.tint);
+    const head = screen.querySelector(".room-head");
+    if (!head || head.querySelector(".room-title")) return;
+    const heading = head.querySelector("h1, h2");
+    const status = head.querySelector(".room-status");
+
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "back-link";
+    back.appendChild(svgIcon("back", 18, 2));
+    back.appendChild(document.createTextNode("Today"));
+    back.addEventListener("click", function () { showScreen(lastHub); });
+
+    const title = document.createElement("div");
+    title.className = "room-title";
+    title.appendChild(chip(room.id, room.tint, "lg"));
+    const words = document.createElement("div");
+    if (heading) words.appendChild(heading);
+    if (status) words.appendChild(status);
+    title.appendChild(words);
+
+    head.innerHTML = "";
+    head.appendChild(back);
+    head.appendChild(title);
+  });
 }
 
 function renderNotes() {
@@ -2019,37 +2693,26 @@ function renderNotes() {
 
   el("notes-status").textContent = notesLine();
 
-  const triage = el("open-triage");
-  triage.hidden = waiting === 0;
-  triage.textContent = waiting === 1 ? "Triage · 1 waiting ›"
-                                     : "Triage · " + waiting + " waiting ›";
+  fillTriageRow(el("open-triage"), waiting);
 
   el("notes-empty").hidden = held.length > 0;
 
   const box = el("notes-items");
   box.innerHTML = "";
   held.forEach(function (note) {
-    const row = document.createElement("div");
-    row.className = "note-row";
-
-    const text = document.createElement("p");
-    text.className = "note-text";
-    text.textContent = note.text;          /* never innerHTML: this is typed text */
-
-    const meta = document.createElement("p");
-    meta.className = "note-meta";
-    meta.textContent = note.created.slice(0, 10) + (note.triaged ? " · reviewed" : "");
-
-    const actions = document.createElement("div");
-    actions.className = "note-actions";
-    actions.appendChild(noteButton("Delete", true, function () {
-      deleteNote(note, renderNotes);
+    const when = shortWhen(note.created.slice(0, 10));
+    box.appendChild(itemRow({
+      icon: "note", tint: NOTES_TINT, title: note.text, clamp: true,
+      meta: when + (note.triaged ? " · reviewed" : ""),
+      pill: note.triaged ? null : { text: "New", tone: "due" },
+      panel: function () {
+        return {
+          icon: "note", tint: NOTES_TINT, title: "Note", meta: "Written " + when, note: note.text,
+          quiet: [{ label: "Triage it", go: function () { showScreen("triage-screen"); } }].filter(function () { return !note.triaged; }),
+          danger: { label: "Delete note", go: function () { deleteNote(note, renderNotes); } }
+        };
+      }
     }));
-
-    row.appendChild(text);
-    row.appendChild(meta);
-    row.appendChild(actions);
-    box.appendChild(row);
   });
 
   renderRail();
@@ -2087,33 +2750,23 @@ function renderRoomNotes(roomId) {
   const box = el(roomId + "-notes-items");
   box.innerHTML = "";
 
+  const tint = roomTint(roomId);
   list.forEach(function (note) {
-    const row = document.createElement("div");
-    row.className = "note-row";
-
-    const text = document.createElement("p");
-    text.className = "note-text";
-    text.textContent = note.text;
-
-    const meta = document.createElement("p");
-    meta.className = "note-meta";
-    meta.textContent = note.promoted ? note.promoted.slice(0, 10) : "";
-
-    const actions = document.createElement("div");
-    actions.className = "note-actions";
-    actions.appendChild(noteButton("Back to Notes", false, function () {
-      Rooms.sendBack(state.notes, note.id);
-      save();
-      renderRoomNotes(roomId);
+    const when = note.promoted ? shortWhen(note.promoted.slice(0, 10)) : "";
+    box.appendChild(itemRow({
+      icon: "note", tint: tint, title: note.text, clamp: true, meta: when ? "Filed " + when : "",
+      panel: function () {
+        return {
+          icon: "note", tint: tint, title: "Note", meta: when ? "Filed here " + when : "", note: note.text,
+          quiet: [{ label: "Back to Notes", go: function () {
+            Rooms.sendBack(state.notes, note.id);
+            save();
+            renderRoomNotes(roomId);
+          } }],
+          danger: { label: "Delete note", go: function () { deleteNote(note, function () { renderRoomNotes(roomId); }); } }
+        };
+      }
     }));
-    actions.appendChild(noteButton("Delete", true, function () {
-      deleteNote(note, function () { renderRoomNotes(roomId); });
-    }));
-
-    row.appendChild(text);
-    row.appendChild(meta);
-    row.appendChild(actions);
-    box.appendChild(row);
   });
 
   renderRail();
@@ -2128,27 +2781,107 @@ function renderRoomNotes(roomId) {
    so the shape of the whole app is visible from its front door. */
 function renderToday() {
   const now = today();
+  const hour = new Date().getHours();
   el("today-date").textContent = DAYS[now.getDay()] + ", " + MONTHS[now.getMonth()] + " " + now.getDate();
+  el("today-greeting").textContent = (hour < 12 ? "Morning" : hour < 17 ? "Afternoon" : "Evening") + ", " + OWNER_NAME;
+  el("today-line").textContent = weekLine();
+
+  renderDays();
+
+  fillTriageRow(el("today-triage"), Rooms.untriaged(state.notes).length);
 
   const box = el("today-cards");
   box.innerHTML = "";
-
   Rooms.liveRooms().forEach(function (room) {
     const view = ROOM_VIEWS[room.id];
     if (!view || !view.card) return;
-    box.appendChild(todayCard(room.icon, room.label, room.tint, view.card(), screenFor(room.id)));
+    box.appendChild(roomTile(room, view.card(), room.id === "fitness"));
   });
-
-  box.appendChild(todayCard("📥", "Notes", "#b05a4a", notesCard(), "notes-screen"));
-
-  const planned = Rooms.ROOMS
-    .filter(function (r) { return !r.live; })
-    .map(function (r) { return r.label; });
-  el("today-soon").hidden = planned.length === 0;
-  el("today-soon-text").textContent = listPhrase(planned) +
-    (planned.length === 1 ? " is" : " are") + " planned. Each gets its own card here when it's built.";
+  const later = laterTile();
+  if (later) box.appendChild(later);
+  /* An odd tile out stretches across, so nothing sits alone in a half row. */
+  const halves = box.querySelectorAll(".tile:not(.wide)");
+  if (halves.length % 2 === 1) halves[halves.length - 1].classList.add("span2");
 
   renderRail();
+}
+
+el("today-triage").addEventListener("click", function () { showScreen("triage-screen"); });
+
+/* The way into triage, on Today and in Notes: hidden when nothing is waiting. */
+function fillTriageRow(node, waiting) {
+  node.hidden = waiting === 0;
+  node.innerHTML = "";
+  if (!waiting) return;
+  const left = document.createElement("span");
+  left.appendChild(chip("notes", NOTES_TINT));
+  left.appendChild(document.createTextNode("Triage"));
+  const right = document.createElement("span");
+  right.className = "count";
+  right.appendChild(document.createTextNode(waiting + " waiting"));
+  right.appendChild(svgIcon("chev", 16, 2));
+  node.appendChild(left);
+  node.appendChild(right);
+}
+
+/* The line under the greeting: what this week holds, in a few words. */
+function weekLine() {
+  const t = ymd(today());
+  const end = Rooms.addDaysYmd(t, 6);
+  const jobs = Rooms.dueWithin(state.maintenance, t, 6).length;
+  const plans = Rooms.upcoming(state.living, t).filter(function (it) { return it.date <= end; }).length;
+  const n = jobs + plans;
+  const parts = [n ? n + (n === 1 ? " thing" : " things") + " this week" : "A clear week"];
+  if (started()) {
+    const week = currentWeek();
+    const long = sessions(week).find(function (x) { return x.day === 6; });
+    if (long && !isDone(long.id)) parts.push((week === TOTAL_WEEKS ? "race day" : "long run") + " Saturday");
+  }
+  return parts.join(" · ");
+}
+
+/* Sunday to Saturday of this week, a dot for each room with something that day. */
+function renderDays() {
+  const box = el("today-days");
+  box.innerHTML = "";
+  const now = today();
+  const t = ymd(now);
+  const from = Rooms.addDaysYmd(t, -now.getDay());
+  const to = Rooms.addDaysYmd(from, 6);
+  const marks = {};
+  Rooms.liveRooms().forEach(function (room) {
+    const view = ROOM_VIEWS[room.id];
+    if (!view || !view.dates) return;
+    view.dates(from, to).forEach(function (d) {
+      marks[d] = marks[d] || [];
+      if (marks[d].indexOf(room.tint) < 0) marks[d].push(room.tint);
+    });
+  });
+  const spoken = [];
+  for (let i = 0; i < 7; i++) {
+    const d = Rooms.addDaysYmd(from, i);
+    const cell = document.createElement("div");
+    cell.className = "day" + (d === t ? " today" : d < t ? " past" : "");
+    const name = document.createElement("span");
+    name.className = "day-name";
+    name.textContent = DAYS[i].slice(0, 1);
+    const num = document.createElement("span");
+    num.className = "day-num";
+    num.textContent = String(Number(d.slice(8)));
+    const dots = document.createElement("span");
+    dots.className = "day-dots";
+    (marks[d] || []).slice(0, 3).forEach(function (tint) {
+      const dot = document.createElement("i");
+      dot.style.setProperty("--tint", tint);
+      dots.appendChild(dot);
+    });
+    if ((marks[d] || []).length) spoken.push(DAYS[i]);
+    cell.appendChild(name);
+    cell.appendChild(num);
+    cell.appendChild(dots);
+    box.appendChild(cell);
+  }
+  box.setAttribute("aria-label", "This week. " + (spoken.length ? "Something on " + listPhrase(spoken) + "." : "Nothing on yet."));
 }
 
 function listPhrase(words) {
@@ -2156,50 +2889,202 @@ function listPhrase(words) {
   return words.slice(0, -1).join(", ") + " and " + words[words.length - 1];
 }
 
-/* A whole card is one button: the room's most useful line right now, and a tap
+/* A whole tile is one button: the room's most useful line right now, and a tap
    takes you into the room. Every string goes in through textContent — a Living
-   title is typed by hand. */
-function todayCard(icon, label, tint, content, screenId) {
+   title is typed by hand. Fitness gets the wide tile with its week ring. */
+function roomTile(room, content, wide) {
   const node = document.createElement("button");
   node.type = "button";
-  node.className = "today-card";
-  node.style.setProperty("--tint", tint);
+  node.className = "tile" + (wide ? " wide" : "");
+  setTint(node, room.tint);
 
-  const iconEl = document.createElement("span");
-  iconEl.className = "today-icon";
-  iconEl.setAttribute("aria-hidden", "true");
-  iconEl.textContent = icon;
-
-  const body = document.createElement("span");
-  body.className = "today-body";
-
-  const labelEl = document.createElement("span");
-  labelEl.className = "today-label";
-  labelEl.textContent = label;
-
+  const label = document.createElement("span");
+  label.className = "tile-label";
   const headline = document.createElement("span");
-  headline.className = "today-headline";
+  headline.className = "tile-headline";
   headline.textContent = content.headline;
-
   const detail = document.createElement("span");
-  detail.className = "today-detail";
+  detail.className = "tile-detail";
   detail.textContent = content.detail;
 
-  const chev = document.createElement("span");
-  chev.className = "today-chev";
-  chev.setAttribute("aria-hidden", "true");
-  chev.textContent = "›";
-
-  body.appendChild(labelEl);
-  body.appendChild(headline);
-  body.appendChild(detail);
-  node.appendChild(iconEl);
-  node.appendChild(body);
-  node.appendChild(chev);
-
-  node.addEventListener("click", function () { showScreen(screenId); });
+  if (wide) {
+    const body = document.createElement("span");
+    body.className = "tile-body";
+    const head = document.createElement("span");
+    head.className = "tile-head";
+    head.appendChild(chip(room.id, room.tint));
+    label.textContent = room.label + (started() && room.id === "fitness" ? " · week " + currentWeek() : "");
+    head.appendChild(label);
+    body.appendChild(head);
+    body.appendChild(headline);
+    body.appendChild(detail);
+    node.appendChild(body);
+    if (room.id === "fitness" && started()) node.appendChild(weekRing());
+  } else {
+    label.textContent = room.label;
+    node.appendChild(chip(room.id, room.tint));
+    node.appendChild(label);
+    node.appendChild(headline);
+    node.appendChild(detail);
+  }
+  node.addEventListener("click", function () { showScreen(screenFor(room.id)); });
   return node;
 }
+
+function weekRing() {
+  const week = currentWeek();
+  const done = doneCount(week);
+  const planned = requiredRuns(week).length;
+  const c = 2 * Math.PI * 26;
+  const wrap = document.createElement("span");
+  wrap.className = "tile-ring";
+  wrap.setAttribute("role", "img");
+  wrap.setAttribute("aria-label", done + " of " + planned + " runs done this week");
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("width", "64");
+  svg.setAttribute("height", "64");
+  svg.setAttribute("viewBox", "0 0 64 64");
+  svg.setAttribute("aria-hidden", "true");
+  [["rgba(240,233,216,0.16)", c], ["var(--tint)", planned ? c * done / planned : 0]].forEach(function (pair, i) {
+    const circle = document.createElementNS(ns, "circle");
+    circle.setAttribute("cx", "32"); circle.setAttribute("cy", "32"); circle.setAttribute("r", "26");
+    circle.setAttribute("fill", "none");
+    circle.setAttribute("stroke-width", "6");
+    circle.style.stroke = pair[0];
+    if (i === 1) {
+      circle.setAttribute("stroke-linecap", "round");
+      circle.setAttribute("stroke-dasharray", pair[1].toFixed(1) + " " + c.toFixed(1));
+      circle.setAttribute("transform", "rotate(-90 32 32)");
+      if (!pair[1]) circle.style.display = "none";
+    }
+    svg.appendChild(circle);
+  });
+  const num = document.createElement("span");
+  num.textContent = done + "/" + planned;
+  wrap.appendChild(svg);
+  wrap.appendChild(num);
+  return wrap;
+}
+
+/* Planned rooms share one quiet tile: the shape of the whole app stays visible. */
+function laterTile() {
+  const planned = Rooms.ROOMS.filter(function (r) { return !r.live; });
+  if (!planned.length) return null;
+  const node = document.createElement("div");
+  node.className = "tile later";
+  const chips = document.createElement("span");
+  chips.className = "chips";
+  planned.slice(0, 4).forEach(function (r) { chips.appendChild(chip(r.id, r.tint, "soft")); });
+  const label = document.createElement("span");
+  label.className = "tile-label";
+  label.style.color = "var(--dim)";
+  label.textContent = planned.map(function (r) { return r.label; }).join(" · ");
+  const headline = document.createElement("span");
+  headline.className = "tile-headline";
+  headline.textContent = "Coming later";
+  node.appendChild(chips);
+  node.appendChild(label);
+  node.appendChild(headline);
+  return node;
+}
+
+/* Rooms: every room as a tile, live ones open, planned ones quiet. */
+function renderRooms() {
+  const box = el("rooms-tiles");
+  box.innerHTML = "";
+  const live = Rooms.liveRooms();
+  el("rooms-line").textContent = live.length + " open · " + (Rooms.ROOMS.length - live.length) + " coming later";
+  Rooms.ROOMS.forEach(function (room) {
+    const view = ROOM_VIEWS[room.id];
+    if (room.live && view) {
+      box.appendChild(roomTile(room, { headline: room.label, detail: view.line ? view.line() : "" }, false));
+      const last = box.lastChild;
+      last.removeChild(last.querySelector(".tile-label"));
+    } else {
+      const node = document.createElement("div");
+      node.className = "tile later";
+      setTint(node, room.tint);
+      node.appendChild(chip(room.id, room.tint, "soft"));
+      const h = document.createElement("span");
+      h.className = "tile-headline";
+      h.textContent = room.label;
+      const d = document.createElement("span");
+      d.className = "tile-detail";
+      d.textContent = "Coming later";
+      node.appendChild(h);
+      node.appendChild(d);
+      box.appendChild(node);
+    }
+  });
+  renderRail();
+}
+
+/* Dates each room puts on the Today strip. Plain YYYY-MM-DD strings, from and to
+   inclusive. */
+function fitnessDates(from, to) {
+  const out = [];
+  Object.keys(state.completed).forEach(function (id) {
+    const d = state.completed[id];
+    if (typeof d === "string" && d >= from && d <= to) out.push(d);
+  });
+  if (started()) {
+    const week = currentWeek();
+    const long = sessions(week).find(function (x) { return x.day === 6; });
+    const start = ymd(addDays(fromYmd(state.startDate), (week - 1) * 7));
+    const sat = Rooms.addDaysYmd(start, 6);
+    if (long && !isDone(long.id) && sat >= from && sat <= to) out.push(sat);
+  }
+  return out;
+}
+
+function maintenanceDates(from, to) {
+  return state.maintenance.tasks.map(Rooms.dueOn).filter(function (d) { return d >= from && d <= to; });
+}
+
+function livingDates(from, to) {
+  const out = [];
+  state.living.items.forEach(function (it) {
+    if (it.done || !it.date) return;
+    let d = it.date;
+    const last = it.endDate || it.date;
+    for (let i = 0; i < 60 && d <= last; i++) {
+      if (d >= from && d <= to) out.push(d);
+      d = Rooms.addDaysYmd(d, 1);
+    }
+  });
+  return out;
+}
+
+/* "Today", "Yesterday", or "Mon, Oct 12" — for when a note was written or filed. */
+function shortWhen(dateYmd) {
+  const n = Rooms.daysUntil(dateYmd, ymd(today()));
+  if (n === 0) return "Today";
+  if (n === 1) return "Yesterday";
+  const d = fromYmd(dateYmd);
+  return DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " + d.getDate();
+}
+
+/* ---------- capture ---------- */
+
+el("capture-save").appendChild(svgIcon("send", 18, 2));
+el("capture-text").addEventListener("input", function () {
+  el("capture-save").disabled = !this.value.trim();
+});
+el("capture").addEventListener("submit", function (event) {
+  event.preventDefault();
+  const box = el("capture-text");
+  const text = box.value.trim();
+  if (!text || !ROOMS_READY) return;
+  state.notes.unshift(Rooms.makeNote(text, new Date().toISOString()));
+  save();
+  box.value = "";
+  el("capture-save").disabled = true;
+  box.blur();
+  toast("Saved to Notes");
+  renderScreen(currentScreen);
+  renderRail();
+});
 
 function fitnessCard() {
   if (!started()) return { headline: "Starts Sunday", detail: "Week 1 of the plan" };
@@ -2228,7 +3113,7 @@ function financeCard() {
 
 function livingCard() {
   const next = Rooms.upcoming(state.living, ymd(today()))[0];
-  if (next) return { headline: next.title, detail: livingWhen(next.date) + " · " + next.kind };
+  if (next) return { headline: next.title, detail: livingSpan(next) + " · " + next.kind };
 
   const ideas = Rooms.someday(state.living).length;
   return {
@@ -2264,14 +3149,41 @@ function livingWhen(dateYmd) {
   return DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " + d.getDate();
 }
 
+/* A trip's dates as one span: "Fri, Nov 6 – Sun, Nov 8". Under way if it has
+   started and not finished. */
+function livingSpan(item) {
+  if (!item.date) return "";
+  if (!item.endDate) return livingWhen(item.date);
+  const todayYmd = ymd(today());
+  const e = fromYmd(item.endDate);
+  const end = DAYS[e.getDay()].slice(0, 3) + ", " + MONTHS[e.getMonth()].slice(0, 3) + " " + e.getDate();
+  if (item.date <= todayYmd && item.endDate >= todayYmd) return "Away until " + end;
+  return livingWhen(item.date) + " – " + end;
+}
+
 function renderLiving() {
   const status = el("living-status");
   if (status) status.textContent = livingLine();
 
   const todayYmd = ymd(today());
+
+  /* Shelves are rebuilt each time, so a shelf with nothing on it is not drawn. */
+  const shelves = el("lv-shelves");
+  shelves.innerHTML = "";
+  Rooms.LIVING_SHELVES.forEach(function (sh) {
+    const items = Rooms.onShelf(state.living, sh.id);
+    if (!items.length) return;
+    const sec = document.createElement("section");
+    sec.className = "list";
+    const h = document.createElement("h3");
+    h.textContent = sh.label + " · " + items.length;
+    sec.appendChild(h);
+    items.forEach(function (item) { sec.appendChild(livingRow(item)); });
+    shelves.appendChild(sec);
+  });
+
   [
     ["lv-upcoming", Rooms.upcoming(state.living, todayYmd)],
-    ["lv-someday", Rooms.someday(state.living)],
     ["lv-past", Rooms.pastItems(state.living, todayYmd)]
   ].forEach(function (pair) {
     const box = el(pair[0] + "-items");
@@ -2284,35 +3196,45 @@ function renderLiving() {
 }
 
 function livingRow(item) {
-  const row = document.createElement("div");
-  row.className = item.done ? "note-row lv-done" : "note-row";
+  const tint = roomTint("living");
+  const icon = item.kind === "Food" ? "food" : item.kind === "Trip" ? "trip" : "place";
+  const place = item.kind === "Food" || item.kind === "Local";   // a place is "been"; a plan is "done"
+  const todayYmd = ymd(today());
+  const away = item.kind === "Trip" && item.date && item.date <= todayYmd && Rooms.lastDay(item) >= todayYmd && !item.done;
+  const pill = item.done ? { text: place ? "Been" : "Done", tone: "ok" } : away ? { text: "Away", tone: "tint" } : null;
 
-  const text = document.createElement("p");
-  text.className = "note-text";
-  text.textContent = item.title;
+  /* Rooms.safeLink already refused anything that isn't http(s) when it was
+     saved; the check runs again here because saved data is never trusted. */
+  const link = Rooms.safeLink(item.link);
+  const isMap = link && /google\.[^/]+\/maps|maps\.app\.goo\.gl|maps\.apple\.com|goo\.gl\/maps/.test(link);
 
-  const meta = document.createElement("p");
-  meta.className = "note-meta";
-  meta.textContent = item.kind + (item.date ? " · " + livingWhen(item.date) : "");
-
-  const actions = document.createElement("div");
-  actions.className = "note-actions";
-  actions.appendChild(noteButton(item.done ? "Not done yet" : "Mark done", false, function () {
-    Rooms.setDone(state.living, item.id, !item.done);
-    save();
-    renderLiving();
-  }));
-  actions.appendChild(noteButton("Delete", true, function () {
-    if (!window.confirm("Delete " + item.title + "? This can't be undone.")) return;
-    Rooms.removeLivingItem(state.living, item.id);
-    save();
-    renderLiving();
-  }));
-
-  row.appendChild(text);
-  row.appendChild(meta);
-  row.appendChild(actions);
-  return row;
+  return itemRow({
+    icon: icon, tint: tint, title: item.title, dim: item.done,
+    meta: [item.where, livingSpan(item) || item.kind].filter(Boolean).join(" · "),
+    pill: pill,
+    panel: function () {
+      const facts = [];
+      if (item.date) facts.push({ icon: "calendar", text: livingSpan(item), sub: item.kind });
+      if (item.where) facts.push({ icon: "place", text: item.where });
+      return {
+        icon: icon, tint: tint, title: item.title,
+        meta: item.date ? item.kind : item.kind + " · someday",
+        facts: facts,
+        primary: { label: item.done ? (place ? "Not been yet" : "Not done yet") : (place ? "Been" : "Mark done"), go: function () {
+          Rooms.setDone(state.living, item.id, !item.done);
+          save();
+          renderLiving();
+        } },
+        quiet: link ? [{ label: isMap ? "Open the map" : "Open the link", href: link }] : [],
+        danger: { label: "Delete", go: function () {
+          if (!window.confirm("Delete " + item.title + "? This can't be undone.")) return;
+          Rooms.removeLivingItem(state.living, item.id);
+          save();
+          renderLiving();
+        } }
+      };
+    }
+  });
 }
 
 el("lv-add-save").addEventListener("click", function () {
@@ -2325,12 +3247,31 @@ el("lv-add-save").addEventListener("click", function () {
     return;
   }
   msg.hidden = true;
+  const linkText = el("lv-add-link").value.trim();
+  if (linkText && !Rooms.safeLink(linkText)) {
+    msg.textContent = "That link doesn't look like a web address. Paste the whole link, or leave it blank.";
+    msg.hidden = false;
+    return;
+  }
+  const start = el("lv-add-date").value || null;
+  const end = el("lv-add-kind").value === "Trip" ? (el("lv-add-end").value || null) : null;
+  if (start && end && end < start) {
+    msg.textContent = "The trip ends before it starts. Check the dates.";
+    msg.hidden = false;
+    return;
+  }
   state.living.items.unshift(Rooms.makeLivingItem(title, {
     kind: el("lv-add-kind").value,
-    date: el("lv-add-date").value || null
+    date: start,
+    endDate: end,
+    where: el("lv-add-where").value,
+    link: linkText
   }, new Date().toISOString()));
   titleBox.value = "";
   el("lv-add-date").value = "";
+  el("lv-add-end").value = "";
+  el("lv-add-where").value = "";
+  el("lv-add-link").value = "";
   titleBox.blur();
   save();
   renderLiving();
@@ -2343,6 +3284,199 @@ if (ROOMS_READY) {
     opt.value = kind;
     opt.textContent = kind;
     el("lv-add-kind").appendChild(opt);
+  });
+}
+
+/* Only a trip has a last day: the "Back on" box appears for trips alone. */
+function syncLivingKind() {
+  const trip = el("lv-add-kind").value === "Trip";
+  el("lv-add-end-box").hidden = !trip;
+  el("lv-add-date-label").textContent = trip ? "Leaving on, if known" : "Date, if there is one";
+}
+el("lv-add-kind").addEventListener("change", syncLivingKind);
+syncLivingKind();
+
+/* ---------- maintenance ---------- */
+
+/* How far ahead "Due now" looks. A job due in the next few days is worth seeing
+   at the top; anything further out sits under Coming up. */
+const MT_SOON_DAYS = 3;
+
+/* When a job is due, in words. Past due dates read as a plain fact — "Due since
+   Mon, Oct 12" — never as a warning. */
+function maintWhen(task) {
+  const todayYmd = ymd(today());
+  const due = Rooms.dueOn(task);
+  const days = Rooms.daysUntil(todayYmd, due);
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due tomorrow";
+  if (days > 1 && days < 7) return "Due in " + days + " days";
+  const d = fromYmd(due);
+  const date = DAYS[d.getDay()].slice(0, 3) + ", " + MONTHS[d.getMonth()].slice(0, 3) + " " + d.getDate();
+  return (days < 0 ? "Due since " : "Due ") + date;
+}
+
+function maintenanceLine() {
+  const n = Rooms.dueWithin(state.maintenance, ymd(today()), 7).length;
+  return n ? n + " due this week" : "Nothing due this week";
+}
+
+function maintenanceCard() {
+  const next = Rooms.byDue(state.maintenance)[0];
+  if (!next) return { headline: "Nothing tracked", detail: "Add a recurring job in Maintenance" };
+  return { headline: next.title, detail: maintWhen(next) + " · " + Rooms.intervalLabel(next.every).toLowerCase() };
+}
+
+function renderMaintenance() {
+  const status = el("maintenance-status");
+  if (status) status.textContent = maintenanceLine();
+
+  const todayYmd = ymd(today());
+  const soon = Rooms.addDaysYmd(todayYmd, MT_SOON_DAYS);
+  const all = Rooms.byDue(state.maintenance);
+  [
+    ["mt-due", all.filter(function (t) { return Rooms.dueOn(t) <= soon; })],
+    ["mt-later", all.filter(function (t) { return Rooms.dueOn(t) > soon; })]
+  ].forEach(function (pair) {
+    const box = el(pair[0] + "-items");
+    el(pair[0]).hidden = pair[1].length === 0;
+    box.innerHTML = "";
+    pair[1].forEach(function (task) { box.appendChild(maintRow(task, pair[0] === "mt-due")); });
+  });
+
+  el("mt-empty").hidden = all.length > 0;
+  el("mt-cal").hidden = all.length === 0;
+  el("mt-cal-all").textContent = all.length === 1 ? "Put this job on my calendar" : "Put all jobs on my calendar";
+}
+
+/* Hand a job (or every job) to the phone's own Calendar as a repeating event.
+   Same route as Export: inside a home screen app a plain download is
+   unreliable, so the file goes to the share sheet, with a download as the
+   fallback. The calendar then owns the alert — Beez still sends nothing. */
+function maintToCalendar(tasks, msgId) {
+  const todayYmd = ymd(today());
+  const ics = Rooms.maintCalendar(tasks, todayYmd, new Date().toISOString());
+  const name = tasks.length === 1
+    ? "beez-" + tasks[0].title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) + ".ics"
+    : "beez-maintenance.ics";
+  const msg = msgId ? el(msgId) : null;
+  function say(text) {
+    if (!msg) { toast(text); return; }
+    msg.textContent = text;
+    msg.hidden = false;
+  }
+
+  try {
+    const file = new File([ics], name, { type: "text/calendar" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Beez maintenance" }).catch(function () {});
+      say("Pick Calendar if it's listed. If not: Save to Files, open the file from Files, then tap Add All.");
+      return;
+    }
+  } catch (e) {
+    /* older browser: fall through to the download */
+  }
+
+  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  say("Saved " + name + ". Open it to add it to your calendar.");
+}
+
+el("mt-cal-all").addEventListener("click", function () {
+  const all = Rooms.byDue(state.maintenance);
+  if (all.length) maintToCalendar(all, "mt-cal-msg");
+});
+
+/* The date a job had before the last "Done today", kept only for this visit so
+   one tap can put it back. Not saved: reopening the app clears it. */
+const maintUndo = {};
+
+function maintRow(task, due) {
+  const tint = roomTint("maintenance");
+  const todayYmd = ymd(today());
+  const days = Rooms.daysUntil(todayYmd, Rooms.dueOn(task));
+  const doneToday = task.lastDone === todayYmd;
+  const shortDue = days <= 0 ? "Due" : days === 1 ? "Tomorrow" : "Due " + DAYS[fromYmd(Rooms.dueOn(task)).getDay()].slice(0, 3);
+  const pill = doneToday ? { text: "Done", tone: "ok" } : due ? { text: shortDue, tone: "due" } : null;
+  const last = fromYmd(task.lastDone);
+  const lastText = "last done " + MONTHS[last.getMonth()].slice(0, 3) + " " + last.getDate();
+
+  return itemRow({
+    icon: "maintenance", tint: tint, title: task.title,
+    meta: maintWhen(task) + " · " + Rooms.intervalLabel(task.every).toLowerCase(),
+    pill: pill,
+    panel: function () {
+      let primary = null;
+      if (maintUndo[task.id]) {
+        primary = { label: "Undo done", go: function () {
+          Rooms.setLastDone(state.maintenance, task.id, maintUndo[task.id]);
+          delete maintUndo[task.id];
+          save();
+          renderMaintenance();
+        } };
+      } else if (!doneToday) {
+        primary = { label: "Done today", go: function () {
+          maintUndo[task.id] = task.lastDone;
+          Rooms.markMaintDone(state.maintenance, task.id, todayYmd);
+          save();
+          renderMaintenance();
+          toast("Done. Next one " + maintWhen(Rooms.maintTaskById(state.maintenance, task.id)).replace(/^Due /, "") + ".");
+        } };
+      }
+      return {
+        icon: "maintenance", tint: tint, title: task.title,
+        meta: Rooms.intervalLabel(task.every) + " · " + lastText,
+        facts: [{ icon: "calendar", text: maintWhen(task), sub: doneToday ? "Done today" : null }],
+        note: task.note,
+        primary: primary,
+        quiet: [{ label: "Add to my calendar", go: function () { maintToCalendar([task], null); } }],
+        danger: { label: "Delete job", go: function () {
+          if (!window.confirm("Delete " + task.title + "? This can't be undone.")) return;
+          Rooms.removeMaintTask(state.maintenance, task.id);
+          save();
+          renderMaintenance();
+        } }
+      };
+    }
+  });
+}
+
+el("mt-add-save").addEventListener("click", function () {
+  const titleBox = el("mt-add-title");
+  const msg = el("mt-add-msg");
+  const title = titleBox.value.trim();
+  if (!title) {
+    msg.textContent = "Give it a name first.";
+    msg.hidden = false;
+    return;
+  }
+  msg.hidden = true;
+  const nowIso = new Date().toISOString();
+  state.maintenance.tasks.push(Rooms.makeMaintTask(title, {
+    every: Number(el("mt-add-every").value),
+    lastDone: el("mt-add-last").value || ymd(today())
+  }, nowIso));
+  titleBox.value = "";
+  el("mt-add-last").value = "";
+  titleBox.blur();
+  save();
+  renderMaintenance();
+});
+
+/* The intervals come from rooms.js so the list and its validation cannot drift. */
+if (ROOMS_READY) {
+  Rooms.MAINT_INTERVALS.forEach(function (i) {
+    const opt = document.createElement("option");
+    opt.value = String(i.days);
+    opt.textContent = i.label;
+    if (i.days === 30) opt.selected = true;
+    el("mt-add-every").appendChild(opt);
   });
 }
 
@@ -2813,7 +3947,35 @@ function showRun(s, plan, evening) {
   el("mark-done").dataset.dist = s.dist;
   el("done-row").hidden = true;
   el("in-miles").placeholder = String(s.dist);
+  fillCountsAs(s);
 }
+
+/* The plan suggests a run for today, but the week is a queue, not a calendar:
+   any open run can be the one done today. The suggestion stays the default. */
+function fillCountsAs(s) {
+  const week = currentWeek();
+  const open = sessions(week).filter(function (x) { return !isDone(x.id); });
+  const pick = el("in-counts");
+  pick.textContent = "";
+  open.forEach(function (x) {
+    const opt = document.createElement("option");
+    opt.value = x.id;
+    opt.textContent = x.name + (x.required ? "" : " (optional)") + " · " + x.dist + " mi";
+    if (x.id === s.id) opt.selected = true;
+    pick.appendChild(opt);
+  });
+  el("run-as").hidden = open.length < 2;
+}
+
+el("in-counts").addEventListener("change", function () {
+  const week = currentWeek();
+  const s = sessions(week).find(function (x) { return x.id === el("in-counts").value; });
+  if (!s) return;
+  el("mark-done").dataset.id = s.id;
+  el("mark-done").dataset.dist = s.dist;
+  el("in-miles").placeholder = String(s.dist);
+  sessionLine(s);
+});
 
 /* Looking at a week that is not the live one: show it, do not let it be logged. */
 function showPreview(s, plan) {
@@ -2828,6 +3990,7 @@ function showPreview(s, plan) {
 }
 
 function plainCard() {
+  el("run-as").hidden = true;
   el("card-eyebrow").hidden = true;
   el("session-guidance").hidden = false;
   el("anyway").hidden = true;
@@ -3648,14 +4811,14 @@ el("summary-back").addEventListener("click", function () { closeSheet("summary-s
 /* On iPhone a plain download is unreliable inside a home screen app, so hand the
    file to the share sheet (Files, Mail, AirDrop) and fall back to a download. */
 el("export").addEventListener("click", function () {
-  const name = "higs-" + ymd(today()) + ".json";
+  const name = "beez-" + ymd(today()) + ".json";
   const text = JSON.stringify(state, null, 2);
   const button = this;
 
   try {
     const file = new File([text], name, { type: "application/json" });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "Higs" }).catch(function () {});
+      navigator.share({ files: [file], title: "Beez" }).catch(function () {});
       return;
     }
   } catch (e) {
@@ -3704,6 +4867,8 @@ document.addEventListener("visibilitychange", function () {
 
 closeWeeks();
 pruneTasks();
+
+decorateRoomHeads();
 
 if (ROOMS_READY) {
   showScreen("today-screen");
